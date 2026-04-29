@@ -157,7 +157,11 @@
     .celeb-card {
       background:var(--bg-secondary); border:0.5px solid var(--border-light);
       border-radius:var(--radius-md); padding:16px 14px; text-align:center;
+      cursor:pointer; transition:transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+      text-decoration:none; display:block; color:inherit;
     }
+    .celeb-card:hover { transform:translateY(-2px); border-color:var(--border-mid); box-shadow:0 4px 16px rgba(0,0,0,0.08); }
+    .wiki-link-hint { font-size:10px; color:var(--accent); margin-top:5px; opacity:0.7; }
     .celeb-avatar {
       width:64px; height:64px; border-radius:50%;
       margin:0 auto 10px; display:flex; align-items:center; justify-content:center;
@@ -493,6 +497,26 @@ function showAllWiki(total) {
 }
 
 /* ── Same-birthday celebrities ── */
+// Notability keywords covering all famous people categories
+const NOTABLE_TERMS = /actor|actress|singer|musician|composer|rapper|filmmaker|director|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|commander|conqueror|explorer|philosopher|scientist|physicist|mathematician|inventor|engineer|astronaut|cosmonaut|writer|author|novelist|poet|painter|sculptor|architect|photographer|journalist|economist|psychologist|biologist|chemist|astronomer|geographer|historian|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|nobel|laureate|entrepreneur|founder|ceo|billionaire|activist|reformer|suffragette|civil rights|bishop|saint|prophet|mythological|deity|monarch|chancellor|senator|congressm|dictator|revolutionary|warlord/i;
+
+function notabilityScore(b) {
+  const p = b.pages?.[0];
+  if (!p) return 0;
+  let score = 0;
+  // Has thumbnail = very likely notable
+  if (p.thumbnail) score += 40;
+  // Matches a famous-person category
+  const desc = (p.description||'').toLowerCase();
+  if (NOTABLE_TERMS.test(desc)) score += 30;
+  // Longer extract = more written about them
+  const extractLen = (p.extract||'').length;
+  score += Math.min(extractLen / 100, 20);
+  // More recent birth year = more likely people know them
+  score += Math.max(0, (b.year - 1400) / 60);
+  return score;
+}
+
 async function fetchBirthdayCelebs(birth) {
   const mm = String(birth.getMonth()+1).padStart(2,'0');
   const dd = String(birth.getDate()).padStart(2,'0');
@@ -501,12 +525,8 @@ async function fetchBirthdayCelebs(birth) {
     const births = (d.births||[]);
     return births
       .filter(b => b.pages?.length && b.pages[0].description)
-      .sort((a,b) => {
-        const aT = a.pages[0].thumbnail?1:0, bT = b.pages[0].thumbnail?1:0;
-        if (bT!==aT) return bT-aT;
-        return b.year - a.year;
-      })
-      .slice(0, 12);
+      .sort((a,b) => notabilityScore(b) - notabilityScore(a))
+      .slice(0, 16);
   } catch(e) { return []; }
 }
 
@@ -517,26 +537,30 @@ function buildBdCelebsHTML(celebs, birth) {
     const p = b.pages[0];
     const name = p.titles?.normalized || p.normalizedtitle || 'Unknown';
     const desc = (p.description||'').slice(0,70);
+    const wikiSlug = p.titles?.canonical || p.title || '';
+    const wikiUrl = wikiSlug ? `https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}` : '';
     const initials = name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
-    const thumbUrl = p.thumbnail?.source
-      ? p.thumbnail.source.replace(/\/\d+px-/, '/120px-')
-      : null;
+    const thumbUrl = p.thumbnail?.source ? p.thumbnail.source.replace(/\/\d+px-/, '/120px-') : null;
     const avatarInner = thumbUrl
       ? `<img src="${thumbUrl}" alt="${name}" loading="lazy" onerror="this.parentNode.innerHTML='${initials}';this.parentNode.classList.add('av${i%6}');" />`
       : initials;
     const avatarClass = thumbUrl ? 'celeb-avatar' : `celeb-avatar av${i%6}`;
+    const tag = wikiUrl ? 'a' : 'div';
+    const attrs = wikiUrl ? `href="${wikiUrl}" target="_blank" rel="noopener"` : '';
     return `
-      <div class="celeb-card">
+      <${tag} class="celeb-card" ${attrs}>
         <div class="${avatarClass}">${avatarInner}</div>
         <div class="celeb-name">${name}</div>
         <div class="celeb-desc">${desc||'Notable figure'}</div>
         <div class="celeb-born">b. ${b.year}</div>
-      </div>`;
+        ${wikiUrl ? '<div class="wiki-link-hint">↗ Wikipedia</div>' : ''}
+      </${tag}>`;
   }).join('');
   return `
     <div class="celeb-section">
       <p class="section-label">Famous people who share your birthday — ${dateStr}</p>
       <div class="celeb-grid">${cards}</div>
+      <p class="info-note">Click any card to open their Wikipedia page</p>
     </div>`;
 }
 
@@ -559,7 +583,7 @@ async function fetchLocalCelebs(city) {
     const people = summaries
       .filter(s => s.status==='fulfilled' && s.value?.type==='standard' && s.value?.description)
       .map(s => s.value)
-      .filter(p => /actor|actress|singer|musician|athlete|footballer|basketball|boxer|politician|writer|author|director|artist|scientist|journalist|model|comedian|rapper|basketball|swimmer|tennis|golfer/i.test(p.description||''))
+      .filter(p => NOTABLE_TERMS.test(p.description||''))
       .slice(0, 8);
     return people;
   } catch(e) { return []; }
@@ -640,31 +664,110 @@ function startLiveCounters(birth) {
 /* ══ DATA ══ */
 function getGlobalEvents(start, end) {
   const db=[
+    // Science & Space
+    {year:1905,text:'Einstein publishes the special theory of relativity — physics is rewritten'},
+    {year:1928,text:'Alexander Fleming discovers penicillin — antibiotic era begins'},
+    {year:1945,text:'Atomic bombs dropped on Hiroshima and Nagasaki — nuclear age begins'},
+    {year:1953,text:'Watson and Crick discover the double-helix structure of DNA'},
+    {year:1957,text:'Sputnik 1 launched — the Space Age begins'},
     {year:1961,text:'Yuri Gagarin becomes the first human in space'},
     {year:1969,text:'Apollo 11 — humans walk on the Moon for the first time'},
-    {year:1975,text:'Microsoft founded by Bill Gates and Paul Allen'},
-    {year:1976,text:'Apple Computer founded by Steve Jobs and Steve Wozniak'},
-    {year:1981,text:'IBM PC launches — personal computing goes mainstream'},
-    {year:1986,text:'Chernobyl nuclear disaster in the USSR'},
+    {year:1971,text:'Intel releases the first commercially available microprocessor'},
+    {year:1978,text:'First test-tube baby born — IVF changes reproductive medicine'},
+    {year:1981,text:'IBM PC launches — personal computing becomes mainstream'},
+    {year:1983,text:'HIV/AIDS identified — global health crisis begins'},
+    {year:1990,text:'Hubble Space Telescope launched into orbit'},
+    {year:1996,text:'Dolly the sheep becomes first mammal cloned from an adult cell'},
+    {year:1997,text:'Deep Blue chess computer defeats world champion Garry Kasparov'},
+    {year:2000,text:'Human Genome Project completes first draft — genetic medicine transforms'},
+    {year:2003,text:'Space Shuttle Columbia disintegrates on re-entry, killing all 7 crew'},
+    {year:2004,text:'Spirit and Opportunity rovers land on Mars'},
+    {year:2012,text:'Higgs boson particle discovered at CERN — standard model confirmed'},
+    {year:2012,text:'NASA Curiosity rover successfully lands on Mars'},
+    {year:2015,text:'Gravitational waves detected for the first time — new era of astronomy'},
+    {year:2019,text:'First photograph of a black hole released by the Event Horizon Telescope'},
+    {year:2020,text:'SpaceX becomes first private company to carry astronauts to the ISS'},
+    {year:2021,text:'James Webb Space Telescope launched into orbit'},
+    {year:2023,text:'AI revolution accelerates — large language models reach mass adoption'},
+    // Politics & War
+    {year:1914,text:'World War I begins — the Great War reshapes the world'},
+    {year:1917,text:'Russian Revolution — Tsar Nicholas II overthrown, Bolsheviks seize power'},
+    {year:1918,text:'World War I ends — 20 million dead, empires collapse'},
+    {year:1929,text:'Wall Street Crash triggers the Great Depression worldwide'},
+    {year:1933,text:'Adolf Hitler becomes Chancellor of Germany — WWII path begins'},
+    {year:1939,text:'World War II begins — Germany invades Poland'},
+    {year:1941,text:'Japan attacks Pearl Harbor — USA enters World War II'},
+    {year:1944,text:'D-Day — Allied forces land at Normandy, turning the tide in Europe'},
+    {year:1945,text:'World War II ends — 70–85 million dead, United Nations founded'},
+    {year:1947,text:'India gains independence from Britain — partition creates Pakistan'},
+    {year:1948,text:'State of Israel declared — Arab-Israeli conflict begins'},
+    {year:1950,text:'Korean War begins — first major armed conflict of the Cold War'},
+    {year:1955,text:'Rosa Parks refuses to give up her seat — U.S. Civil Rights Movement galvanized'},
+    {year:1962,text:'Cuban Missile Crisis — world brought to the brink of nuclear war'},
+    {year:1963,text:'President John F. Kennedy assassinated in Dallas'},
+    {year:1968,text:'Martin Luther King Jr. assassinated — worldwide grief and unrest'},
+    {year:1973,text:'Oil crisis — OPEC embargo triggers global recession'},
+    {year:1975,text:'Vietnam War ends — Saigon falls, U.S. withdraws'},
+    {year:1979,text:'Iranian Revolution — Shah overthrown, Islamic Republic established'},
     {year:1989,text:'Fall of the Berlin Wall — Cold War era ends'},
-    {year:1991,text:'World Wide Web opens to the public — internet era begins'},
+    {year:1990,text:'Gulf War begins — coalition forces expel Iraq from Kuwait'},
+    {year:1991,text:'Dissolution of the Soviet Union — Cold War officially ends'},
     {year:1994,text:'Nelson Mandela elected — apartheid ends in South Africa'},
-    {year:1997,text:'Hong Kong returned from British to Chinese sovereignty'},
-    {year:1998,text:'Google founded in a California garage'},
+    {year:1994,text:'Rwandan genocide — approximately 800,000 Tutsi murdered in 100 days'},
+    {year:1999,text:'NATO bombs Yugoslavia — Kosovo War ends'},
     {year:2001,text:'September 11 attacks — global security landscape changes forever'},
-    {year:2003,text:'SARS outbreak — first major epidemic of the 21st century'},
-    {year:2004,text:'Indian Ocean tsunami kills over 227,000 people'},
-    {year:2007,text:'Apple launches the iPhone — smartphone revolution begins'},
+    {year:2003,text:'U.S. invades Iraq — Saddam Hussein toppled'},
     {year:2008,text:'Global financial crisis — worst recession since the Great Depression'},
     {year:2010,text:'Arab Spring — wave of pro-democracy uprisings across the Middle East'},
-    {year:2012,text:'NASA Curiosity rover successfully lands on Mars'},
+    {year:2011,text:'Osama bin Laden killed by U.S. special forces in Pakistan'},
+    {year:2014,text:'ISIS declares caliphate — terror group seizes large parts of Iraq and Syria'},
     {year:2015,text:'Paris Agreement on climate change signed by 196 nations'},
     {year:2016,text:'Brexit referendum — UK votes to leave the European Union'},
-    {year:2019,text:'5G networks launch globally — next connectivity era begins'},
     {year:2020,text:'COVID-19 pandemic declared — global lockdowns reshape daily life'},
-    {year:2021,text:'James Webb Space Telescope launched into orbit'},
+    {year:2021,text:'Taliban retakes Afghanistan as U.S. forces withdraw after 20 years'},
     {year:2022,text:'Russia invades Ukraine — largest conflict in Europe since WWII'},
-    {year:2023,text:'AI revolution accelerates — large language models reach mass adoption'},
+    // Culture, Sport & Technology
+    {year:1927,text:'The Jazz Singer releases — first major talking motion picture'},
+    {year:1936,text:'Jesse Owens wins four gold medals at the Berlin Olympics'},
+    {year:1954,text:'Roger Bannister runs the first sub-4-minute mile'},
+    {year:1958,text:'Pelé, aged 17, leads Brazil to first FIFA World Cup title'},
+    {year:1960,text:'Rome Olympics — Cassius Clay (Muhammad Ali) wins boxing gold'},
+    {year:1964,text:'The Beatles perform on The Ed Sullivan Show — Beatlemania hits America'},
+    {year:1969,text:'Woodstock festival — 400,000 gather for iconic music event'},
+    {year:1971,text:'Muhammad Ali fights Joe Frazier in "Fight of the Century"'},
+    {year:1973,text:'Secretariat wins the Triple Crown — greatest racehorse performance recorded'},
+    {year:1975,text:'Microsoft founded by Bill Gates and Paul Allen'},
+    {year:1976,text:'Apple Computer founded by Steve Jobs and Steve Wozniak'},
+    {year:1977,text:'Star Wars premieres — blockbuster cinema era begins'},
+    {year:1980,text:'John Lennon shot dead outside his New York apartment'},
+    {year:1984,text:'Michael Jackson\'s Thriller becomes best-selling album of all time'},
+    {year:1985,text:'Live Aid concert raises $125M for Ethiopian famine relief'},
+    {year:1986,text:'Chernobyl nuclear disaster — worst nuclear accident in history'},
+    {year:1989,text:'Tiananmen Square massacre — Chinese troops crush pro-democracy protests'},
+    {year:1991,text:'World Wide Web opens to the public — internet era begins'},
+    {year:1994,text:'Nelson Mandela elected — apartheid ends in South Africa'},
+    {year:1995,text:'eBay and Amazon founded within weeks of each other'},
+    {year:1997,text:'Hong Kong returned from British to Chinese sovereignty'},
+    {year:1998,text:'Google founded in a California garage'},
+    {year:2000,text:'Y2K bug feared — global digital infrastructure holds as new millennium begins'},
+    {year:2001,text:'Wikipedia launches — knowledge becomes freely accessible to all'},
+    {year:2003,text:'SARS outbreak — first major epidemic of the 21st century'},
+    {year:2004,text:'Indian Ocean tsunami kills over 227,000 people'},
+    {year:2004,text:'Facebook founded — social media era begins'},
+    {year:2005,text:'YouTube launches — video content becomes universally shareable'},
+    {year:2007,text:'Apple launches the iPhone — smartphone revolution begins'},
+    {year:2008,text:'Barack Obama elected first Black U.S. president'},
+    {year:2008,text:'Bitcoin white paper published — cryptocurrency born'},
+    {year:2010,text:'Haiti earthquake kills over 160,000 people'},
+    {year:2011,text:'Arab Spring topples leaders in Tunisia, Egypt, Libya'},
+    {year:2012,text:'Felix Baumgartner skydives from the stratosphere — 39km freefall'},
+    {year:2014,text:'Malala Yousafzai becomes youngest-ever Nobel Peace Prize winner'},
+    {year:2016,text:'Bob Dylan wins Nobel Prize in Literature'},
+    {year:2016,text:'Leicester City win the English Premier League at 5,000-to-1 odds'},
+    {year:2019,text:'5G networks launch globally — next connectivity era begins'},
+    {year:2020,text:'George Floyd\'s murder sparks global Black Lives Matter protests'},
+    {year:2021,text:'Simone Biles withdraws from Olympic events — mental health in sports highlighted'},
+    {year:2023,text:'Lionel Messi wins 8th Ballon d\'Or — greatest of all time debate settled for many'},
     {year:2024,text:'Paris Summer Olympics — 206 nations compete'},
   ];
   return db.filter(e=>e.year>=start&&e.year<=end).map(e=>({...e,type:'global'}));
@@ -672,33 +775,304 @@ function getGlobalEvents(start, end) {
 
 function getRegionalEvents(start, end, code) {
   const db={
-    us:[{year:1969,text:'Apollo 11 launched from Kennedy Space Center, Florida'},{year:2001,text:'September 11 attacks in New York, Virginia, and Pennsylvania'},{year:2005,text:'Hurricane Katrina devastates New Orleans and the Gulf Coast'},{year:2008,text:'Barack Obama elected as first Black U.S. president'},{year:2012,text:'Hurricane Sandy batters the East Coast'},{year:2020,text:'George Floyd protests sweep across hundreds of U.S. cities'},{year:2021,text:'Capitol Hill riot shocks the nation on January 6'}],
-    gb:[{year:1997,text:'Tony Blair\'s Labour Party wins a historic landslide election'},{year:2005,text:'7/7 London bombings — coordinated terrorist attacks on the Tube'},{year:2012,text:'London Summer Olympics — Team GB wins record 65 medals'},{year:2016,text:'Brexit — UK votes 52% to leave the European Union'},{year:2022,text:'Queen Elizabeth II passes away after 70 years on the throne'}],
-    de:[{year:1990,text:'German reunification — East and West Germany become one nation'},{year:2002,text:'Germany adopts the euro as its currency'},{year:2006,text:'Germany hosts the FIFA World Cup'},{year:2015,text:'Germany accepts over one million refugees during the European crisis'}],
-    fr:[{year:1998,text:'France wins the FIFA World Cup on home soil'},{year:2015,text:'Paris terrorist attacks at the Bataclan and surrounding areas'},{year:2019,text:'Notre-Dame Cathedral devastated by fire'},{year:2024,text:'France hosts the Paris Summer Olympics'}],
-    jp:[{year:1995,text:'Kobe earthquake kills over 6,400 people'},{year:1995,text:'Tokyo subway sarin attack by Aum Shinrikyo'},{year:2011,text:'Tōhoku earthquake, tsunami, and Fukushima nuclear disaster'},{year:2021,text:'Tokyo Olympics held one year late due to the COVID-19 pandemic'}],
-    cn:[{year:1997,text:'Hong Kong returned from British to Chinese sovereignty'},{year:2008,text:'Beijing Olympics — China tops the gold medal table'},{year:2008,text:'Sichuan earthquake kills nearly 90,000 people'},{year:2020,text:'COVID-19 pandemic begins in Wuhan, China'}],
-    ru:[{year:1991,text:'Dissolution of the Soviet Union — 15 new nations emerge'},{year:1998,text:'Russian financial crisis — ruble collapses'},{year:2014,text:'Russia annexes Crimea from Ukraine'},{year:2018,text:'Russia hosts the FIFA World Cup'}],
-    in:[{year:1991,text:'India opens its economy — the liberalization era begins'},{year:2004,text:'Indian Ocean tsunami kills over 10,000 people on India\'s coast'},{year:2014,text:'Narendra Modi elected Prime Minister in a historic landslide'},{year:2023,text:'Chandrayaan-3 lands on the Moon\'s south pole — a world first'}],
-    au:[{year:2000,text:'Sydney hosts the Summer Olympics — Australia wins 58 medals'},{year:2009,text:'Black Saturday bushfires kill 173 people in Victoria'},{year:2019,text:'Black Summer bushfires burn 18 million hectares nationwide'},{year:2022,text:'Anthony Albanese elected PM, ending 9 years of Coalition rule'}],
-    br:[{year:2002,text:'Luiz Inácio Lula da Silva elected president of Brazil'},{year:2014,text:'Brazil hosts the FIFA World Cup — suffers historic 7-1 loss to Germany'},{year:2016,text:'Rio de Janeiro hosts the Summer Olympics'},{year:2022,text:'Lula elected president again after defeating Bolsonaro'}],
-    ph:[{year:1986,text:'EDSA People Power Revolution peacefully restores democracy'},{year:2001,text:'EDSA II — People Power ousts President Joseph Estrada'},{year:2013,text:'Typhoon Haiyan (Yolanda) devastates the Visayas, killing 6,300+'},{year:2016,text:'Rodrigo Duterte elected president with a landslide victory'},{year:2022,text:'Ferdinand Marcos Jr. wins the presidential election'}],
-    es:[{year:2004,text:'Madrid train bombings kill 191 people just before elections'},{year:2008,text:'Spain wins UEFA Euro 2008 — start of golden era'},{year:2010,text:'Spain wins the FIFA World Cup in South Africa'},{year:2017,text:'Catalan independence referendum sparks constitutional crisis'}],
-    it:[{year:1992,text:'Mani Pulite corruption investigation shakes Italian politics'},{year:2002,text:'Italy adopts the euro as its official currency'},{year:2009,text:'L\'Aquila earthquake kills 309 people in central Italy'},{year:2020,text:'Italy becomes the epicenter of Europe\'s COVID-19 outbreak'}],
-    ca:[{year:1995,text:'Quebec independence referendum — 50.6% vote to remain in Canada'},{year:2003,text:'SARS epidemic hits Toronto — worst outside Asia'},{year:2010,text:'Vancouver hosts the Winter Olympics'},{year:2015,text:'Justin Trudeau elected Prime Minister'}],
-    kr:[{year:1988,text:'Seoul hosts the Summer Olympics — South Korea on the world stage'},{year:2002,text:'South Korea co-hosts FIFA World Cup and reaches semi-finals'},{year:2018,text:'PyeongChang hosts the Winter Olympics'},{year:2022,text:'K-drama and K-pop reach unprecedented global popularity'}],
-    mx:[{year:1985,text:'Mexico City earthquake kills thousands and transforms civil society'},{year:1994,text:'NAFTA takes effect — Mexico integrates into North American economy'},{year:2017,text:'Devastating 7.1 magnitude earthquake strikes central Mexico'},{year:2018,text:'Andrés Manuel López Obrador wins historic presidential landslide'}],
-    za:[{year:1994,text:'First democratic elections — Nelson Mandela becomes president'},{year:1995,text:'South Africa wins Rugby World Cup on home soil'},{year:2010,text:'South Africa hosts the FIFA World Cup — first on African soil'}],
-    tr:[{year:1999,text:'Devastating Marmara earthquake kills over 17,000 people'},{year:2016,text:'Failed coup attempt reshapes Turkey\'s political landscape'},{year:2023,text:'Catastrophic earthquake in southeast Turkey kills 50,000+'}],
-    ua:[{year:2004,text:'Orange Revolution — mass protests overturn fraudulent election'},{year:2014,text:'Euromaidan revolution — Yanukovych flees the country'},{year:2022,text:'Russia launches full-scale invasion of Ukraine'}],
-    ar:[{year:2001,text:'Argentina financial crisis — economy collapses, president flees'},{year:2022,text:'Argentina wins the FIFA World Cup in Qatar'}],
-    ng:[{year:1999,text:'Nigeria returns to civilian rule after years of military government'},{year:2014,text:'Boko Haram kidnaps 276 schoolgirls in Chibok — global outrage'},{year:2020,text:'#EndSARS protests against police brutality erupt nationwide'}],
-    eg:[{year:2011,text:'Egyptian Revolution — Hosni Mubarak resigns after 30 years'},{year:2013,text:'Military coup removes President Mohamed Morsi'}],
-    id:[{year:1998,text:'Asian financial crisis triggers fall of Suharto after 32 years'},{year:2004,text:'Indian Ocean tsunami kills 167,000 people in Aceh alone'},{year:2019,text:'Indonesia moves its capital from Jakarta to Nusantara on Borneo'}],
-    pk:[{year:1998,text:'Pakistan conducts nuclear tests — becomes a nuclear-armed state'},{year:2010,text:'Devastating floods affect 20 million Pakistanis'},{year:2022,text:'Catastrophic flooding covers one-third of Pakistan'}],
-    sa:[{year:1990,text:'Gulf War begins — Saudi Arabia hosts coalition forces'},{year:2017,text:'Crown Prince Mohammed bin Salman launches Vision 2030 reforms'}],
+    us:[
+      {year:1941,text:'Japan attacks Pearl Harbor — U.S. enters World War II'},
+      {year:1963,text:'JFK assassinated in Dallas — America mourns its president'},
+      {year:1969,text:'Apollo 11 launched from Kennedy Space Center, Florida'},
+      {year:1974,text:'President Nixon resigns over Watergate scandal'},
+      {year:1980,text:'Mount St. Helens erupts — deadliest volcanic event in U.S. history'},
+      {year:1986,text:'Space Shuttle Challenger explodes 73 seconds after launch'},
+      {year:1992,text:'Los Angeles riots — 63 killed after Rodney King verdict'},
+      {year:1995,text:'Oklahoma City bombing kills 168 people'},
+      {year:2001,text:'September 11 attacks in New York, Virginia, and Pennsylvania'},
+      {year:2005,text:'Hurricane Katrina devastates New Orleans and the Gulf Coast'},
+      {year:2008,text:'Barack Obama elected as first Black U.S. president'},
+      {year:2012,text:'Hurricane Sandy batters the East Coast'},
+      {year:2017,text:'Las Vegas mass shooting — deadliest in modern U.S. history'},
+      {year:2020,text:'George Floyd protests sweep across hundreds of U.S. cities'},
+      {year:2021,text:'Capitol Hill riot shocks the nation on January 6'},
+    ],
+    gb:[
+      {year:1940,text:'Battle of Britain — RAF defeats Luftwaffe in the skies over England'},
+      {year:1952,text:'Queen Elizabeth II ascends to the throne'},
+      {year:1966,text:'England wins FIFA World Cup at Wembley'},
+      {year:1969,text:'Beatles play final public concert on rooftop in London'},
+      {year:1979,text:'Margaret Thatcher becomes Britain\'s first female Prime Minister'},
+      {year:1981,text:'Prince Charles and Lady Diana Spencer wed — watched by 750 million'},
+      {year:1997,text:'Princess Diana dies in Paris car crash — national outpouring of grief'},
+      {year:1997,text:'Tony Blair\'s Labour Party wins a historic landslide election'},
+      {year:2005,text:'7/7 London bombings — coordinated terrorist attacks on the Tube'},
+      {year:2012,text:'London Summer Olympics — Team GB wins record 65 medals'},
+      {year:2016,text:'Brexit — UK votes 52% to leave the European Union'},
+      {year:2020,text:'UK becomes first country to approve and administer a COVID-19 vaccine'},
+      {year:2022,text:'Queen Elizabeth II passes away after 70 years on the throne'},
+    ],
+    de:[
+      {year:1933,text:'Hitler becomes Chancellor — Third Reich begins'},
+      {year:1945,text:'Berlin falls to Soviet forces — Nazi Germany surrenders'},
+      {year:1961,text:'Berlin Wall constructed — city divided overnight'},
+      {year:1972,text:'Munich Olympics massacre — 11 Israeli athletes killed'},
+      {year:1989,text:'Fall of the Berlin Wall — Germany moves toward reunification'},
+      {year:1990,text:'German reunification — East and West Germany become one nation'},
+      {year:2002,text:'Germany adopts the euro as its currency'},
+      {year:2006,text:'Germany hosts the FIFA World Cup'},
+      {year:2014,text:'Germany wins FIFA World Cup in Brazil, defeating host nation 7-1'},
+      {year:2015,text:'Germany accepts over one million refugees during the European crisis'},
+    ],
+    fr:[
+      {year:1944,text:'Liberation of Paris — Allied forces end four years of Nazi occupation'},
+      {year:1958,text:'Charles de Gaulle founds the Fifth Republic'},
+      {year:1968,text:'May 1968 student uprising rocks France'},
+      {year:1995,text:'Jacques Chirac elected president'},
+      {year:1998,text:'France wins the FIFA World Cup on home soil'},
+      {year:2015,text:'Paris terrorist attacks at the Bataclan and surrounding areas'},
+      {year:2016,text:'Nice truck attack kills 86 on Bastille Day'},
+      {year:2017,text:'Emmanuel Macron elected France\'s youngest-ever president'},
+      {year:2019,text:'Notre-Dame Cathedral devastated by fire'},
+      {year:2024,text:'France hosts the Paris Summer Olympics'},
+    ],
+    jp:[
+      {year:1945,text:'Atomic bombs dropped on Hiroshima and Nagasaki'},
+      {year:1964,text:'Tokyo hosts the Summer Olympics — Japan\'s postwar comeback'},
+      {year:1989,text:'Emperor Hirohito dies — Showa era ends'},
+      {year:1995,text:'Kobe earthquake kills over 6,400 people'},
+      {year:1995,text:'Tokyo subway sarin attack by Aum Shinrikyo'},
+      {year:2002,text:'Japan co-hosts FIFA World Cup'},
+      {year:2011,text:'Tōhoku earthquake, tsunami, and Fukushima nuclear disaster'},
+      {year:2019,text:'Emperor Akihito abdicates — first abdication in 200 years'},
+      {year:2021,text:'Tokyo Olympics held one year late due to the COVID-19 pandemic'},
+      {year:2022,text:'Former Prime Minister Shinzo Abe assassinated during a speech'},
+    ],
+    cn:[
+      {year:1949,text:'Mao Zedong proclaims the People\'s Republic of China'},
+      {year:1966,text:'Cultural Revolution begins — 10 years of mass upheaval'},
+      {year:1976,text:'Mao Zedong dies — era ends, Deng Xiaoping eventually takes power'},
+      {year:1989,text:'Tiananmen Square massacre — pro-democracy protests crushed'},
+      {year:1997,text:'Hong Kong returned from British to Chinese sovereignty'},
+      {year:2001,text:'China joins the World Trade Organization'},
+      {year:2003,text:'China sends first taikonaut Yang Liwei into space'},
+      {year:2008,text:'Beijing Olympics — China tops the gold medal table'},
+      {year:2008,text:'Sichuan earthquake kills nearly 90,000 people'},
+      {year:2020,text:'COVID-19 pandemic begins in Wuhan, China'},
+      {year:2021,text:'China lands Zhurong rover on Mars'},
+    ],
+    ru:[
+      {year:1917,text:'Russian Revolution — Bolsheviks seize power, Tsar Nicholas II overthrown'},
+      {year:1953,text:'Stalin dies — Soviet thaw begins under Khrushchev'},
+      {year:1961,text:'Yuri Gagarin launched into space — Soviet triumph in Space Race'},
+      {year:1986,text:'Chernobyl nuclear disaster in Ukraine (then USSR)'},
+      {year:1991,text:'Dissolution of the Soviet Union — 15 new nations emerge'},
+      {year:1993,text:'Constitutional crisis — tanks fire on parliament in Moscow'},
+      {year:1998,text:'Russian financial crisis — ruble collapses'},
+      {year:1999,text:'Vladimir Putin becomes prime minister, then acting president'},
+      {year:2004,text:'Beslan school siege — 334 hostages killed, mostly children'},
+      {year:2014,text:'Russia annexes Crimea from Ukraine'},
+      {year:2018,text:'Russia hosts the FIFA World Cup'},
+      {year:2022,text:'Russia launches full-scale invasion of Ukraine'},
+    ],
+    in:[
+      {year:1947,text:'India gains independence from Britain — partition creates Pakistan'},
+      {year:1948,text:'Mahatma Gandhi assassinated in New Delhi'},
+      {year:1966,text:'Indira Gandhi becomes India\'s first female Prime Minister'},
+      {year:1984,text:'Operation Blue Star — army raids Golden Temple, Amritsar'},
+      {year:1984,text:'Bhopal gas tragedy — worst industrial disaster in history'},
+      {year:1991,text:'India opens its economy — the liberalization era begins'},
+      {year:1998,text:'India conducts nuclear tests — tensions with Pakistan spike'},
+      {year:2004,text:'Indian Ocean tsunami kills over 10,000 people on India\'s coast'},
+      {year:2008,text:'Mumbai terror attacks kill 166 people over four days'},
+      {year:2014,text:'Narendra Modi elected Prime Minister in a historic landslide'},
+      {year:2023,text:'Chandrayaan-3 lands on the Moon\'s south pole — a world first'},
+    ],
+    au:[
+      {year:1967,text:'Referendum grants citizenship rights to Aboriginal Australians'},
+      {year:1975,text:'Australian constitutional crisis — Prime Minister Gough Whitlam dismissed'},
+      {year:1983,text:'Australia II wins the America\'s Cup — first non-U.S. winner in 132 years'},
+      {year:1996,text:'Port Arthur massacre — 35 killed, leading to major gun law reform'},
+      {year:2000,text:'Sydney hosts the Summer Olympics — Australia wins 58 medals'},
+      {year:2009,text:'Black Saturday bushfires kill 173 people in Victoria'},
+      {year:2010,text:'Julia Gillard becomes Australia\'s first female Prime Minister'},
+      {year:2019,text:'Black Summer bushfires burn 18 million hectares nationwide'},
+      {year:2022,text:'Anthony Albanese elected PM, ending 9 years of Coalition rule'},
+    ],
+    br:[
+      {year:1950,text:'Brazil devastated by World Cup final loss to Uruguay in Rio — "Maracanazo"'},
+      {year:1958,text:'17-year-old Pelé leads Brazil to first World Cup title in Sweden'},
+      {year:1960,text:'Brasília inaugurated as new capital of Brazil'},
+      {year:1970,text:'Brazil wins third World Cup — Pelé\'s final tournament'},
+      {year:1985,text:'Brazil returns to democracy after 21 years of military rule'},
+      {year:1992,text:'President Collor impeached — first such removal in Brazilian history'},
+      {year:2002,text:'Luiz Inácio Lula da Silva elected president of Brazil'},
+      {year:2010,text:'Brazil elects Dilma Rousseff — first female president'},
+      {year:2013,text:'Mass protests sweep Brazil over corruption and public spending'},
+      {year:2014,text:'Brazil hosts the FIFA World Cup — suffers historic 7-1 loss to Germany'},
+      {year:2016,text:'Rio de Janeiro hosts the Summer Olympics'},
+      {year:2022,text:'Lula elected president again after defeating Bolsonaro'},
+    ],
+    ph:[
+      {year:1941,text:'Japan invades the Philippines — three years of occupation begin'},
+      {year:1944,text:'MacArthur returns to Leyte — liberation of the Philippines begins'},
+      {year:1972,text:'Ferdinand Marcos declares martial law'},
+      {year:1983,text:'Benigno Aquino assassinated at Manila airport'},
+      {year:1986,text:'EDSA People Power Revolution peacefully restores democracy'},
+      {year:1991,text:'Mount Pinatubo erupts — second largest volcanic eruption of 20th century'},
+      {year:1995,text:'Manny Pacquiao begins professional boxing career'},
+      {year:2001,text:'EDSA II — People Power ousts President Joseph Estrada'},
+      {year:2004,text:'Fernando Poe Jr. loses controversial presidential election'},
+      {year:2009,text:'Typhoon Ketsana (Ondoy) floods Metro Manila'},
+      {year:2012,text:'Philippines wins first Olympic gold medal (boxing)'},
+      {year:2013,text:'Typhoon Haiyan (Yolanda) devastates the Visayas, killing 6,300+'},
+      {year:2016,text:'Rodrigo Duterte elected president with a landslide victory'},
+      {year:2022,text:'Ferdinand Marcos Jr. wins the presidential election'},
+    ],
+    es:[
+      {year:1936,text:'Spanish Civil War begins — Franco eventually seizes power'},
+      {year:1975,text:'Francisco Franco dies — Spain transitions to democracy'},
+      {year:1978,text:'Spain adopts a new democratic constitution'},
+      {year:1982,text:'Spain joins NATO'},
+      {year:1992,text:'Barcelona hosts the Summer Olympics'},
+      {year:1992,text:'Seville hosts Expo 92 — Spain celebrates quincentennial of Columbus voyage'},
+      {year:2002,text:'Spain adopts the euro'},
+      {year:2004,text:'Madrid train bombings kill 191 people just before elections'},
+      {year:2006,text:'Spain legalizes same-sex marriage'},
+      {year:2008,text:'Spain wins UEFA Euro 2008 — start of golden era'},
+      {year:2010,text:'Spain wins the FIFA World Cup in South Africa'},
+      {year:2017,text:'Catalan independence referendum sparks constitutional crisis'},
+    ],
+    it:[
+      {year:1945,text:'Benito Mussolini captured and executed by partisans'},
+      {year:1946,text:'Italy becomes a republic after referendum abolishes the monarchy'},
+      {year:1960,text:'Rome hosts the Summer Olympics'},
+      {year:1978,text:'Aldo Moro kidnapped and murdered by the Red Brigades'},
+      {year:1980,text:'Irpinia earthquake kills 2,914 in southern Italy'},
+      {year:1992,text:'Mani Pulite corruption investigation shakes Italian politics'},
+      {year:1994,text:'Silvio Berlusconi enters politics and wins general election'},
+      {year:2002,text:'Italy adopts the euro as its official currency'},
+      {year:2006,text:'Italy wins the FIFA World Cup in Germany'},
+      {year:2009,text:'L\'Aquila earthquake kills 309 people in central Italy'},
+      {year:2011,text:'Italy\'s debt crisis threatens the eurozone'},
+      {year:2020,text:'Italy becomes the epicenter of Europe\'s COVID-19 outbreak'},
+    ],
+    ca:[
+      {year:1967,text:'Montreal Expo 67 — Canada\'s centennial celebration captivates the world'},
+      {year:1972,text:'Canada beats USSR in "Summit Series" — defining hockey moment'},
+      {year:1976,text:'Montreal hosts the Summer Olympics'},
+      {year:1980,text:'Terry Fox begins Marathon of Hope — cancer awareness run'},
+      {year:1988,text:'Calgary hosts the Winter Olympics'},
+      {year:1995,text:'Quebec independence referendum — 50.6% vote to remain in Canada'},
+      {year:2003,text:'SARS epidemic hits Toronto — worst outside Asia'},
+      {year:2010,text:'Vancouver hosts the Winter Olympics'},
+      {year:2015,text:'Justin Trudeau elected Prime Minister'},
+      {year:2017,text:'Canada celebrates 150 years of Confederation'},
+    ],
+    kr:[
+      {year:1950,text:'Korean War begins — peninsula divided at 38th parallel'},
+      {year:1988,text:'Seoul hosts the Summer Olympics — South Korea on the world stage'},
+      {year:1997,text:'Asian financial crisis hits South Korea hard'},
+      {year:2002,text:'South Korea co-hosts FIFA World Cup and reaches semi-finals'},
+      {year:2016,text:'President Park Geun-hye impeached over corruption scandal'},
+      {year:2018,text:'PyeongChang hosts the Winter Olympics'},
+      {year:2019,text:'Parasite becomes first non-English film to win Best Picture Oscar'},
+      {year:2022,text:'K-drama and K-pop reach unprecedented global popularity'},
+    ],
+    mx:[
+      {year:1968,text:'Tlatelolco massacre — hundreds of students killed before Mexico City Olympics'},
+      {year:1985,text:'Mexico City earthquake kills thousands and transforms civil society'},
+      {year:1986,text:'Mexico hosts the FIFA World Cup for the second time'},
+      {year:1994,text:'NAFTA takes effect — Zapatista uprising begins in Chiapas'},
+      {year:1994,text:'NAFTA takes effect — Mexico integrates into North American economy'},
+      {year:2000,text:'PRI loses power for first time in 71 years — democratic transition'},
+      {year:2006,text:'Drug war escalates under President Calderón'},
+      {year:2017,text:'Devastating 7.1 magnitude earthquake strikes central Mexico'},
+      {year:2018,text:'Andrés Manuel López Obrador wins historic presidential landslide'},
+    ],
+    za:[
+      {year:1960,text:'Sharpeville massacre — 69 killed at anti-apartheid protest'},
+      {year:1964,text:'Nelson Mandela sentenced to life imprisonment'},
+      {year:1976,text:'Soweto uprising — students protest against apartheid education'},
+      {year:1990,text:'Nelson Mandela released after 27 years in prison'},
+      {year:1994,text:'First democratic elections — Nelson Mandela becomes president'},
+      {year:1995,text:'South Africa wins Rugby World Cup on home soil'},
+      {year:2010,text:'South Africa hosts the FIFA World Cup — first on African soil'},
+      {year:2021,text:'Unrest following Jacob Zuma\'s imprisonment kills over 300 people'},
+    ],
+    tr:[
+      {year:1923,text:'Republic of Turkey proclaimed by Mustafa Kemal Atatürk'},
+      {year:1974,text:'Turkey invades Cyprus — island divided'},
+      {year:1980,text:'Military coup — third in Turkish history'},
+      {year:1999,text:'Devastating Marmara earthquake kills over 17,000 people'},
+      {year:2002,text:'AKP wins elections — Erdoğan becomes Prime Minister'},
+      {year:2013,text:'Gezi Park protests — mass unrest across Turkey'},
+      {year:2016,text:'Failed coup attempt reshapes Turkey\'s political landscape'},
+      {year:2023,text:'Catastrophic earthquake in southeast Turkey kills 50,000+'},
+    ],
+    ua:[
+      {year:1986,text:'Chernobyl nuclear disaster — worst nuclear accident in history'},
+      {year:1991,text:'Ukraine declares independence following Soviet dissolution'},
+      {year:2004,text:'Orange Revolution — mass protests overturn fraudulent election'},
+      {year:2010,text:'Viktor Yanukovych becomes president'},
+      {year:2014,text:'Euromaidan revolution — Yanukovych flees the country'},
+      {year:2014,text:'Russia annexes Crimea and backs separatists in eastern Ukraine'},
+      {year:2019,text:'Volodymyr Zelensky, a comedian, elected president in a landslide'},
+      {year:2022,text:'Russia launches full-scale invasion of Ukraine'},
+    ],
+    ar:[
+      {year:1978,text:'Argentina hosts and wins the FIFA World Cup under military dictatorship'},
+      {year:1982,text:'Falklands War — Argentina defeated by Britain'},
+      {year:1986,text:'Maradona\'s "Hand of God" and "Goal of the Century" at Mexico World Cup'},
+      {year:2001,text:'Argentina financial crisis — economy collapses, president flees'},
+      {year:2014,text:'Argentina reaches FIFA World Cup final but loses to Germany'},
+      {year:2021,text:'Argentina wins Copa América — Messi claims first international trophy'},
+      {year:2022,text:'Argentina wins the FIFA World Cup in Qatar'},
+    ],
+    ng:[
+      {year:1960,text:'Nigeria gains independence from Britain'},
+      {year:1967,text:'Biafran War begins — Nigerian civil war kills up to 3 million'},
+      {year:1993,text:'Military annuls election won by Moshood Abiola — protests erupt'},
+      {year:1999,text:'Nigeria returns to civilian rule after years of military government'},
+      {year:2005,text:'Afrobeats genre begins its rise to global popularity'},
+      {year:2014,text:'Boko Haram kidnaps 276 schoolgirls in Chibok — global outrage'},
+      {year:2020,text:'#EndSARS protests against police brutality erupt nationwide'},
+    ],
+    eg:[
+      {year:1952,text:'Egyptian Revolution — monarchy overthrown, republic declared'},
+      {year:1956,text:'Suez Crisis — Nasser nationalizes Suez Canal'},
+      {year:1967,text:'Six-Day War — Egypt loses Sinai Peninsula to Israel'},
+      {year:1973,text:'Yom Kippur War — Egypt surprises Israel across Suez Canal'},
+      {year:1981,text:'President Anwar Sadat assassinated during military parade'},
+      {year:2011,text:'Egyptian Revolution — Hosni Mubarak resigns after 30 years'},
+      {year:2013,text:'Military coup removes President Mohamed Morsi'},
+    ],
+    id:[
+      {year:1945,text:'Indonesia declares independence — Dutch colonial rule ends'},
+      {year:1965,text:'Coup attempt and counter-coup — Suharto seizes power, mass killings follow'},
+      {year:1997,text:'Asian financial crisis devastates Indonesia\'s economy'},
+      {year:1998,text:'Asian financial crisis triggers fall of Suharto after 32 years'},
+      {year:2002,text:'Bali bombings kill 202 people — deadliest terrorist attack in Indonesia'},
+      {year:2004,text:'Indian Ocean tsunami kills 167,000 people in Aceh alone'},
+      {year:2014,text:'Joko Widodo (Jokowi) elected president — outsider breaks elite grip'},
+      {year:2019,text:'Indonesia moves its capital from Jakarta to Nusantara on Borneo'},
+    ],
+    pk:[
+      {year:1947,text:'Pakistan created at independence — partition triggers mass displacement'},
+      {year:1971,text:'Bangladesh (formerly East Pakistan) gains independence after war'},
+      {year:1979,text:'President Bhutto executed — Zia ul-Haq consolidates military power'},
+      {year:1988,text:'Benazir Bhutto becomes first female PM of a Muslim-majority nation'},
+      {year:1998,text:'Pakistan conducts nuclear tests — becomes a nuclear-armed state'},
+      {year:2007,text:'Benazir Bhutto assassinated upon return from exile'},
+      {year:2010,text:'Devastating floods affect 20 million Pakistanis'},
+      {year:2022,text:'Catastrophic flooding covers one-third of Pakistan'},
+    ],
+    sa:[
+      {year:1938,text:'Oil discovered in Saudi Arabia — kingdom\'s fortunes transform'},
+      {year:1973,text:'OPEC oil embargo — Saudi Arabia wields new geopolitical power'},
+      {year:1979,text:'Grand Mosque seizure in Mecca shocks the Muslim world'},
+      {year:1990,text:'Gulf War begins — Saudi Arabia hosts coalition forces'},
+      {year:2001,text:'15 of 19 September 11 hijackers are Saudi nationals'},
+      {year:2017,text:'Crown Prince Mohammed bin Salman launches Vision 2030 reforms'},
+      {year:2019,text:'Saudi Arabia opens to tourism for the first time'},
+    ],
   };
-  return (db[code]||[]).filter(e=>e.year>=start&&e.year<=end).slice(0,6).map(e=>({...e,type:'regional'}));
+  return (db[code]||[]).filter(e=>e.year>=start&&e.year<=end).slice(0,12).map(e=>({...e,type:'regional'}));
 }
 </script>
 </body>
