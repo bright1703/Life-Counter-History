@@ -46,6 +46,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 .tb-btn{display:flex;align-items:center;gap:6px;padding:7px 14px;background:var(--bg2);color:var(--tx2);border:.5px solid var(--bm);border-radius:20px;font-size:13px;font-weight:500;font-family:var(--font);cursor:pointer;transition:background .15s,color .15s;white-space:nowrap}
 .tb-btn:hover{background:var(--bg3);color:var(--tx)}
 .lang-select{padding:6px 10px;background:var(--bg2);color:var(--tx2);border:.5px solid var(--bm);border-radius:20px;font-size:13px;font-family:var(--font);cursor:pointer;outline:none}
+/* ── site logo ── */
+.site-logo{font-size:19px;font-weight:800;letter-spacing:-0.5px;color:var(--tx);font-family:Georgia,'Times New Roman',serif;text-decoration:none;padding:5px 12px;border:.5px solid var(--bm);border-radius:20px;background:var(--bg2);transition:background .15s}
+.site-logo span{color:var(--ac)}
+.site-logo:hover{background:var(--bg3)}
+/* ── bitcoin block ── */
+.btc-section{margin-bottom:32px}
+.btc-card{background:linear-gradient(135deg,#F7931A18 0%,var(--bg2) 100%);border:.5px solid #F7931A44;border-radius:var(--rl);padding:22px 22px 18px}
+.btc-header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.btc-logo{font-size:32px}
+.btc-title{font-size:17px;font-weight:600;color:var(--tx)}
+.btc-sub{font-size:13px;color:var(--tx2);margin-top:2px}
+.btc-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:11px;margin-bottom:16px}
+.btc-stat{background:var(--bg);border-radius:var(--rm);padding:14px 13px;text-align:center}
+.btc-stat-lbl{font-size:11px;color:var(--tx2);margin-bottom:4px}
+.btc-stat-val{font-size:18px;font-weight:600;color:var(--tx)}
+.btc-stat-sub{font-size:11px;color:var(--tx3);margin-top:2px}
+.btc-highlight{background:var(--bg);border-radius:var(--rm);padding:14px 16px;border-left:3px solid #F7931A}
+.btc-hl-label{font-size:12px;color:var(--tx2);margin-bottom:4px}
+.btc-hl-val{font-size:22px;font-weight:700;color:#F7931A}
+.btc-hl-sub{font-size:12px;color:var(--tx3);margin-top:3px}
+/* ── footer ── */
+.site-footer{text-align:center;padding:28px 20px 32px;border-top:.5px solid var(--bl);margin-top:20px}
+.footer-logo{font-size:22px;font-weight:800;letter-spacing:-0.5px;color:var(--tx2);font-family:Georgia,'Times New Roman',serif;margin-bottom:8px}
+.footer-logo span{color:var(--ac)}
+.footer-copy{font-size:12px;color:var(--tx3)}
 
 /* ── header ── */
 .header{text-align:center;padding:24px 20px 28px}
@@ -235,8 +260,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
       <option value="es">🇪🇸 Español</option>
       <option value="pt">🇧🇷 Português</option>
       <option value="it">🇮🇹 Italiano</option>
+      <option value="th">🇹🇭 ภาษาไทย</option>
     </select>
   </div>
+  <a class="site-logo" href="#">born<span>history</span>.com</a>
   <button class="tb-btn" onclick="toggleTheme()" id="theme-btn">
     <span id="theme-icon">🌙</span><span id="theme-label">Dark mode</span>
   </button>
@@ -272,6 +299,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 
 <div id="results-area"></div>
 
+<footer class="site-footer no-print">
+  <div class="footer-logo">born<span>history</span>.com</div>
+  <div class="footer-copy">© 2026–2027 bornhistory.com · Made by S.F.</div>
+</footer>
+
 <script>
 /* ══════════════════════════════════════
    TRANSLATIONS
@@ -295,7 +327,7 @@ const T = {
     planetAge:'Your age on other planets',
     famousBirthday:'Famous people sharing your birthday',
     famousCity:'Notable people from',clickWiki:'Click any card to open Wikipedia',
-    eventsTitle:'Every notable event on',eventsCount:'events recorded on your birthday in history',
+    eventsTitle:'Notable events on',eventsCount:'events recorded on your birthday in history',
     showAll:'Show all',events:'events ↓',
     timelineTitle:'Your lifetime timeline',global:'Global',regional:'Regional',
     shareTitle:'Share your life card',
@@ -303,6 +335,48 @@ const T = {
     shareText:'I\'ve lived {days} days, my heart has beaten {hb} times, and I\'ve made {orbits} trips around the Sun 🌍',
     printPdf:'Print / PDF',kofi:'Buy me a coffee ☕',
     population:'World population at birth',popNow:'Today\'s population',popBorn:'People born after you',
+    btcTitle:'Bitcoin & Your Life',
+    btcYearsBefore:'Years before Bitcoin was born after you',
+    btcYearsAfter:'Bitcoin appeared',
+    btcAgeAtLaunch:'Your age when Bitcoin launched',
+    btcIf1:'If you had bought 1 BTC at launch',
+    btcLaunchPrice:'Bitcoin launch price (2009)',
+    btcNowPrice:'Bitcoin price today (~2025)',
+    btcProfit:'Profit if sold today',
+    btcYearsLabel:'years after your birth',
+    wikiOpen:'↗ Wikipedia',
+  },
+  th:{
+    title:'ตัวติดตามชีวิตโลก',sub:'ค้นพบโลกในวันที่คุณเกิด',
+    dob:'วันเกิด',city:'เมือง',explore:'สำรวจชีวิตของฉัน',loading:'กำลังโหลดข้อมูล',
+    daysLived:'วันที่มีชีวิต',heartbeats:'จังหวะการเต้นของหัวใจ',orbits:'วงโคจรของโลก',
+    breathsTaken:'การหายใจ',sleepHours:'ชั่วโมงนอนหลับ',blinks:'ครั้งที่กะพริบตา',
+    lifeProgress:'ความคืบหน้าชีวิต',avgBpm:'เฉลี่ย ~70 ครั้ง/นาที',aroundSun:'รอบดวงอาทิตย์',
+    weatherBirth:'สภาพอากาศตอนเกิด',maxTemp:'อุณหภูมิสูงสุดเมื่อ',
+    hottest:'หนึ่งในวันที่ร้อนที่สุดของปีนั้น',coldest:'หนึ่งในวันที่หนาวที่สุดของปีนั้น',
+    warmer:'อุ่นกว่าค่าเฉลี่ยของปีนั้น',colder:'หนาวกว่าค่าเฉลี่ยของปีนั้น',typical:'อุณหภูมิปกติของปีนั้น',
+    yourPlace:'สถานที่ของคุณในโลก',
+    pricesTitle:'ราคาประวัติศาสตร์ในปีเกิดของคุณ',
+    pricesBread:'ขนมปัง (1 ก้อน)',pricesGas:'น้ำมัน (ลิตร)',pricesGold:'ทอง (ทรอยออนซ์)',pricesNow:'วันนี้',
+    musicTitle:'เพลงยอดนิยมปีเกิดของคุณ',filmTitle:'ภาพยนตร์ยอดนิยมปีเกิดของคุณ',chart:'ชาร์ต',
+    zodiac:'ราศีตะวันตก',chinese:'นักษัตรจีน',lifeNum:'เลขเส้นทางชีวิต',planetAge:'อายุของคุณบนดาวเคราะห์อื่น',
+    famousBirthday:'คนดังที่มีวันเกิดเดียวกัน',famousCity:'คนมีชื่อเสียงจาก',clickWiki:'คลิกการ์ดเพื่อเปิด Wikipedia',
+    eventsTitle:'เหตุการณ์สำคัญในวันนี้',eventsCount:'เหตุการณ์ที่บันทึกในวันเกิดของคุณ',showAll:'แสดงทั้งหมด',events:'เหตุการณ์ ↓',
+    timelineTitle:'ไทม์ไลน์ชีวิตของคุณ',global:'ระดับโลก',regional:'ระดับภูมิภาค',
+    shareTitle:'แชร์การ์ดชีวิตของคุณ',shareCopy:'คัดลอกลิงก์',shareCopied:'คัดลอกแล้ว!',
+    shareText:'ฉันมีชีวิตอยู่มาแล้ว {days} วัน หัวใจเต้นไปแล้ว {hb} ครั้ง และโคจรรอบดวงอาทิตย์ {orbits} รอบ 🌍',
+    printPdf:'พิมพ์ / PDF',kofi:'เลี้ยงกาแฟฉันหน่อย ☕',
+    population:'ประชากรโลกตอนที่คุณเกิด',popNow:'ประชากรโลกวันนี้',popBorn:'คนที่เกิดหลังจากคุณ',
+    btcTitle:'Bitcoin & ชีวิตของคุณ',
+    btcYearsBefore:'ปีก่อนที่ Bitcoin จะเกิด',
+    btcYearsAfter:'Bitcoin ปรากฏขึ้น',
+    btcAgeAtLaunch:'อายุของคุณเมื่อ Bitcoin เปิดตัว',
+    btcIf1:'ถ้าคุณซื้อ 1 BTC ตอนเปิดตัว',
+    btcLaunchPrice:'ราคา Bitcoin ตอนเปิดตัว (2009)',
+    btcNowPrice:'ราคา Bitcoin วันนี้ (~2025)',
+    btcProfit:'กำไรถ้าขายวันนี้',
+    btcYearsLabel:'ปีหลังจากที่คุณเกิด',
+    wikiOpen:'↗ Wikipedia',
   },
   ru:{
     title:'Трекер жизни мира',sub:'Узнайте, каким был мир в день вашего рождения',
@@ -330,6 +404,7 @@ const T = {
     shareText:'Я прожил {days} дней, моё сердце ударило {hb} раз, я совершил {orbits} оборота вокруг Солнца 🌍',
     printPdf:'Печать / PDF',kofi:'Угости кофе ☕',
     population:'Население Земли при рождении',popNow:'Население сегодня',popBorn:'Людей родилось после вас',
+    btcTitle:'Bitcoin и ваша жизнь',btcYearsBefore:'лет до появления Bitcoin',btcYearsAfter:'Bitcoin появился',btcAgeAtLaunch:'Ваш возраст при запуске Bitcoin',btcIf1:'Если бы вы купили 1 BTC при запуске',btcLaunchPrice:'Цена Bitcoin при запуске (2009)',btcNowPrice:'Цена Bitcoin сегодня (~2025)',btcProfit:'Прибыль при продаже сегодня',btcYearsLabel:'лет после вашего рождения',wikiOpen:'↗ Wikipedia',
   },
   zh:{
     title:'世界人生追踪器',sub:'发现您出生时的世界',
@@ -351,6 +426,7 @@ const T = {
     shareText:'我已活了{days}天，心跳{hb}次，绕太阳转了{orbits}圈 🌍',
     printPdf:'打印 / PDF',kofi:'请我喝杯咖啡 ☕',
     population:'出生时世界人口',popNow:'今日人口',popBorn:'您出生后出生的人',
+    btcTitle:'比特币与您的生活',btcYearsBefore:'比特币诞生前的年数',btcYearsAfter:'比特币出现',btcAgeAtLaunch:'比特币推出时您的年龄',btcIf1:'如果您在推出时购买了1个比特币',btcLaunchPrice:'比特币推出价格（2009年）',btcNowPrice:'今日比特币价格（约2025年）',btcProfit:'今日出售利润',btcYearsLabel:'您出生后的年数',wikiOpen:'↗ Wikipedia',
   },
   ja:{
     title:'ワールドライフトラッカー',sub:'あなたの誕生日の世界を発見しよう',
@@ -372,6 +448,7 @@ const T = {
     shareText:'{days}日生きた、心臓は{hb}回鼓動し、太陽の周りを{orbits}回回りました 🌍',
     printPdf:'印刷 / PDF',kofi:'コーヒーをおごって ☕',
     population:'誕生時の世界人口',popNow:'今日の人口',popBorn:'あなたの後に生まれた人',
+    btcTitle:'ビットコインとあなたの人生',btcYearsBefore:'ビットコイン誕生前の年数',btcYearsAfter:'ビットコインが登場',btcAgeAtLaunch:'ビットコイン開始時のあなたの年齢',btcIf1:'開始時に1BTCを購入していたら',btcLaunchPrice:'ビットコイン開始価格（2009年）',btcNowPrice:'今日のビットコイン価格（約2025年）',btcProfit:'今日売却した場合の利益',btcYearsLabel:'あなたの誕生後の年数',wikiOpen:'↗ Wikipedia',
   },
   ko:{
     title:'월드 라이프 트래커',sub:'당신이 태어났을 때의 세상을 발견하세요',
@@ -393,6 +470,7 @@ const T = {
     shareText:'{days}일을 살았고, 심장은 {hb}번 뛰었으며, 태양 주위를 {orbits}바퀴 돌았습니다 🌍',
     printPdf:'인쇄 / PDF',kofi:'커피 사주기 ☕',
     population:'출생 시 세계 인구',popNow:'오늘의 인구',popBorn:'당신 이후 태어난 사람',
+    btcTitle:'비트코인과 당신의 삶',btcYearsBefore:'비트코인 탄생 전 년수',btcYearsAfter:'비트코인 등장',btcAgeAtLaunch:'비트코인 출시 당시 나이',btcIf1:'출시 때 1 BTC를 샀다면',btcLaunchPrice:'비트코인 출시 가격 (2009)',btcNowPrice:'오늘 비트코인 가격 (~2025)',btcProfit:'오늘 판매 시 수익',btcYearsLabel:'당신이 태어난 후 몇 년',wikiOpen:'↗ Wikipedia',
   },
   de:{
     title:'Welt-Leben-Tracker',sub:'Entdecke die Welt, wie sie war und ist',
@@ -414,6 +492,7 @@ const T = {
     shareText:'Ich habe {days} Tage gelebt, mein Herz schlug {hb} Mal und ich machte {orbits} Reisen um die Sonne 🌍',
     printPdf:'Drucken / PDF',kofi:'Kauf mir einen Kaffee ☕',
     population:'Weltbevölkerung bei Geburt',popNow:'Bevölkerung heute',popBorn:'Nach dir geborene Menschen',
+    btcTitle:'Bitcoin & Dein Leben',btcYearsBefore:'Jahre vor Bitcoin',btcYearsAfter:'Bitcoin erschien',btcAgeAtLaunch:'Dein Alter beim Bitcoin-Start',btcIf1:'Wenn du beim Start 1 BTC gekauft hättest',btcLaunchPrice:'Bitcoin-Startpreis (2009)',btcNowPrice:'Bitcoin-Preis heute (~2025)',btcProfit:'Gewinn bei heutigem Verkauf',btcYearsLabel:'Jahre nach deiner Geburt',wikiOpen:'↗ Wikipedia',
   },
   fr:{
     title:'Traqueur de vie mondial',sub:'Découvrez le monde tel qu\'il était à votre naissance',
@@ -435,6 +514,7 @@ const T = {
     shareText:'J\'ai vécu {days} jours, mon cœur a battu {hb} fois et j\'ai effectué {orbits} tours autour du Soleil 🌍',
     printPdf:'Imprimer / PDF',kofi:'Offrez-moi un café ☕',
     population:'Population mondiale à la naissance',popNow:'Population aujourd\'hui',popBorn:'Personnes nées après vous',
+    btcTitle:'Bitcoin & Votre Vie',btcYearsBefore:'ans avant Bitcoin',btcYearsAfter:'Bitcoin est apparu',btcAgeAtLaunch:'Votre âge au lancement de Bitcoin',btcIf1:'Si vous aviez acheté 1 BTC au lancement',btcLaunchPrice:'Prix Bitcoin au lancement (2009)',btcNowPrice:'Prix Bitcoin aujourd\'hui (~2025)',btcProfit:'Bénéfice si vendu aujourd\'hui',btcYearsLabel:'ans après votre naissance',wikiOpen:'↗ Wikipedia',
   },
   es:{
     title:'Rastreador de vida mundial',sub:'Descubre el mundo tal como era en tu nacimiento',
@@ -456,6 +536,7 @@ const T = {
     shareText:'He vivido {days} días, mi corazón ha latido {hb} veces y he dado {orbits} vueltas alrededor del Sol 🌍',
     printPdf:'Imprimir / PDF',kofi:'Invítame un café ☕',
     population:'Población mundial al nacer',popNow:'Población hoy',popBorn:'Personas nacidas después de ti',
+    btcTitle:'Bitcoin y Tu Vida',btcYearsBefore:'años antes de Bitcoin',btcYearsAfter:'Bitcoin apareció',btcAgeAtLaunch:'Tu edad cuando se lanzó Bitcoin',btcIf1:'Si hubieras comprado 1 BTC en el lanzamiento',btcLaunchPrice:'Precio de Bitcoin en el lanzamiento (2009)',btcNowPrice:'Precio de Bitcoin hoy (~2025)',btcProfit:'Beneficio si vendes hoy',btcYearsLabel:'años después de tu nacimiento',wikiOpen:'↗ Wikipedia',
   },
   pt:{
     title:'Rastreador de vida mundial',sub:'Descubra o mundo como era no seu nascimento',
@@ -477,6 +558,7 @@ const T = {
     shareText:'Vivi {days} dias, meu coração bateu {hb} vezes e dei {orbits} voltas ao redor do Sol 🌍',
     printPdf:'Imprimir / PDF',kofi:'Me pague um café ☕',
     population:'População mundial ao nascer',popNow:'População hoje',popBorn:'Pessoas nascidas depois de você',
+    btcTitle:'Bitcoin e Sua Vida',btcYearsBefore:'anos antes do Bitcoin',btcYearsAfter:'O Bitcoin surgiu',btcAgeAtLaunch:'Sua idade no lançamento do Bitcoin',btcIf1:'Se você tivesse comprado 1 BTC no lançamento',btcLaunchPrice:'Preço do Bitcoin no lançamento (2009)',btcNowPrice:'Preço do Bitcoin hoje (~2025)',btcProfit:'Lucro se vendesse hoje',btcYearsLabel:'anos após seu nascimento',wikiOpen:'↗ Wikipedia',
   },
   it:{
     title:'Tracker della vita mondiale',sub:'Scopri il mondo com\'era alla tua nascita',
@@ -498,6 +580,7 @@ const T = {
     shareText:'Ho vissuto {days} giorni, il mio cuore ha battuto {hb} volte e ho fatto {orbits} giri intorno al Sole 🌍',
     printPdf:'Stampa / PDF',kofi:'Offrimi un caffè ☕',
     population:'Popolazione mondiale alla nascita',popNow:'Popolazione oggi',popBorn:'Persone nate dopo di te',
+    btcTitle:'Bitcoin e la Tua Vita',btcYearsBefore:'anni prima di Bitcoin',btcYearsAfter:'Bitcoin è apparso',btcAgeAtLaunch:'La tua età al lancio di Bitcoin',btcIf1:'Se avessi comprato 1 BTC al lancio',btcLaunchPrice:'Prezzo Bitcoin al lancio (2009)',btcNowPrice:'Prezzo Bitcoin oggi (~2025)',btcProfit:'Profitto se vendessi oggi',btcYearsLabel:'anni dopo la tua nascita',wikiOpen:'↗ Wikipedia',
   }
 };
 let lang = 'en';
@@ -590,6 +673,7 @@ async function runTracker(){
     const statsHTML=buildStats(daysLived,heartbeats,orbits,breaths,sleepHrs,blinks,lifePercent);
     const astroHTML=buildAstro(birth,year,daysLived);
     const pricesHTML=buildPrices(year);
+    const btcHTML=buildBitcoin(year);
     const mediaHTML=buildMedia(year);
     const popHTML=buildPopulation(year,daysLived);
     const mapHTML=buildMap();
@@ -607,6 +691,7 @@ async function runTracker(){
         ${astroHTML}
         <div class="divider"></div>
         ${pricesHTML}
+        ${btcHTML}
         ${mediaHTML}
         <div class="divider"></div>
         ${weatherHTML}
@@ -734,7 +819,49 @@ function buildPrices(year){
     </div>`;
 }
 
-/* ── Music & Films ── */
+/* ── Bitcoin Block ── */
+function buildBitcoin(year){
+  const btcLaunchYear = 2009;
+  const btcLaunchPrice = 0.001; // price in 2009 (pizzas era, ~$0.001)
+  const btcNowPrice = 97000; // approximate 2025 price in USD
+  const yearsFromBirth = btcLaunchYear - year;
+  const ageAtLaunch = yearsFromBirth > 0 ? yearsFromBirth : null;
+  const profit = ((btcNowPrice - btcLaunchPrice) * 1).toFixed(0);
+
+  let timeText = '';
+  if(yearsFromBirth > 0){
+    timeText = `${yearsFromBirth} ${t('btcYearsLabel')} — ${t('btcYearsAfter')} ${yearsFromBirth} ${t('btcYearsBefore').replace('лет до','').trim()} ${t('btcYearsLabel')}`;
+  } else if(yearsFromBirth === 0){
+    timeText = `Bitcoin launched the same year you were born (${year})`;
+  } else {
+    timeText = `You were born ${Math.abs(yearsFromBirth)} years after Bitcoin launched`;
+  }
+
+  return `
+    <div class="btc-section">
+      <p class="sec-lbl">₿ ${t('btcTitle')}</p>
+      <div class="btc-card">
+        <div class="btc-header">
+          <div class="btc-logo">₿</div>
+          <div>
+            <div class="btc-title">${t('btcTitle')}</div>
+            <div class="btc-sub">Bitcoin launched in January 2009 — ${yearsFromBirth > 0 ? yearsFromBirth + ' ' + t('btcYearsLabel') : 'after you were born'}</div>
+          </div>
+        </div>
+        <div class="btc-stats">
+          ${ageAtLaunch !== null ? `<div class="btc-stat"><div class="btc-stat-lbl">${t('btcAgeAtLaunch')}</div><div class="btc-stat-val">${ageAtLaunch}</div><div class="btc-stat-sub">years old</div></div>` : ''}
+          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcLaunchPrice')}</div><div class="btc-stat-val">~$0.001</div><div class="btc-stat-sub">per BTC</div></div>
+          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcNowPrice')}</div><div class="btc-stat-val">~$97,000</div><div class="btc-stat-sub">per BTC (~2025)</div></div>
+          <div class="btc-stat"><div class="btc-stat-lbl">Years since Bitcoin</div><div class="btc-stat-val">${new Date().getFullYear() - btcLaunchYear}</div><div class="btc-stat-sub">years of existence</div></div>
+        </div>
+        <div class="btc-highlight">
+          <div class="btc-hl-label">💰 ${t('btcIf1')} (1 BTC for ~$0.001)</div>
+          <div class="btc-hl-val">+$96,999.999</div>
+          <div class="btc-hl-sub">${t('btcProfit')} · ~97,000,000x return</div>
+        </div>
+      </div>
+    </div>`;
+}
 function buildMedia(year){
   const musicDb={
     1950:['Goodnight Irene – Leadbelly','Tennessee Waltz – Patti Page','Mona Lisa – Nat King Cole'],
@@ -871,7 +998,7 @@ function buildShare(days,hb,orbits){
         <a class="share-btn share-tg" href="https://t.me/share/url?url=${url}&text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">✈️ Telegram</a>
         <button class="share-btn share-copy" onclick="copyLink(this)">${t('shareCopy')}</button>
         <button class="act-btn primary" onclick="window.print()">🖨️ ${t('printPdf')}</button>
-        <a class="act-btn kofi-btn" href="https://ko-fi.com/bornhistory" target="_blank" rel="noopener">${t('kofi')}</a>
+        <a class="act-btn kofi-btn" href="https://ko-fi.com/YOUR_KOFI_ID" target="_blank" rel="noopener">${t('kofi')}</a>
       </div>
     </div>`;
 }
@@ -887,22 +1014,21 @@ async function fetchAllBirthdayEvents(birth){
 }
 function buildWikiHTML(events,birth){
   if(!events.length)return'';
-  const SHOW=10;
+  // Filter to only the most important events: prefer ones with multiple Wikipedia page references
+  const important = events
+    .filter(ev => ev.pages && ev.pages.length > 0)
+    .sort((a,b) => (b.pages?.length||0) - (a.pages?.length||0))
+    .slice(0, 12);
+  // Fall back to first 12 if no pages metadata
+  const display = important.length >= 4 ? important : events.slice(0, 12);
+  const sorted = [...display].sort((a,b) => a.year - b.year);
   const dateStr=birth.toLocaleDateString('en-GB',{month:'long',day:'numeric'});
-  const items=events.map((ev,i)=>`<div class="wiki-item"${i>=SHOW?' style="display:none" data-hidden="1"':''}>
-    <div class="wiki-year">${ev.year}</div><div class="wiki-text">${ev.text}</div></div>`).join('');
   return `
     <div class="wiki-section">
       <p class="sec-lbl">${t('eventsTitle')} ${dateStr}</p>
-      <div id="wiki-list">${items}</div>
-      ${events.length>SHOW?`<button class="show-more-btn" id="wiki-more-btn" onclick="showAllWiki(${events.length})">${t('showAll')} ${events.length} ${t('events')}</button>`:''}
+      ${sorted.map(ev=>`<div class="wiki-item"><div class="wiki-year">${ev.year}</div><div class="wiki-text">${ev.text}</div></div>`).join('')}
       <p class="info-note">${events.length} ${t('eventsCount')}</p>
     </div>`;
-}
-function showAllWiki(total){
-  document.querySelectorAll('[data-hidden="1"]').forEach(el=>el.style.display='');
-  const btn=document.getElementById('wiki-more-btn');
-  if(btn){btn.textContent=`Showing all ${total} events`;btn.disabled=true;btn.style.opacity='.5';}
 }
 
 /* ── Famous people – same birthday ── */
@@ -954,7 +1080,7 @@ function buildBdCelebsHTML(celebs,birth){
     const avClass=thumbUrl?'celeb-avatar':`celeb-avatar av${i%6}`;
     const tag=wikiUrl?'a':'div';
     const attrs=wikiUrl?`href="${wikiUrl}" target="_blank" rel="noopener"`:'';
-    return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc||'Notable figure'}</div><div class="celeb-born">b. ${b.year}</div>${wikiUrl?'<div class="wiki-hint">↗ Wikipedia</div>':''}</${tag}>`;
+    return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc||'Notable figure'}</div><div class="celeb-born">b. ${b.year}</div>${wikiUrl?`<div class="wiki-hint">${t('wikiOpen')}</div>`:''}</${tag}>`;
   }).join('');
   return`<div class="celeb-section"><p class="sec-lbl">${t('famousBirthday')} — ${dateStr}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
 }
@@ -977,9 +1103,13 @@ function buildLocalHTML(people){
     const thumbUrl=p.thumbnail?.source?p.thumbnail.source.replace(/\/\d+px-/,'/120px-'):null;
     const avInner=thumbUrl?`<img src="${thumbUrl}" alt="${name}" loading="lazy" onerror="this.parentNode.textContent='${initials}';this.parentNode.className='celeb-avatar av${(i+3)%6}';"/>`:`${initials}`;
     const avClass=thumbUrl?'celeb-avatar':`celeb-avatar av${(i+3)%6}`;
-    return`<div class="celeb-card"><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc}</div></div>`;
+    const wikiSlug=p.titles?.canonical||p.title||'';
+    const wikiUrl=wikiSlug?`https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`:'';
+    const tag=wikiUrl?'a':'div';
+    const attrs=wikiUrl?`href="${wikiUrl}" target="_blank" rel="noopener"`:'';
+    return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc}</div>${wikiUrl?`<div class="wiki-hint">${t('wikiOpen')}</div>`:''}</${tag}>`;
   }).join('');
-  return`<div class="celeb-section"><p class="sec-lbl">${t('famousCity')} ${selectedCity.name}</p><div class="celeb-grid">${cards}</div><p class="info-note">Sourced from Wikipedia · Results may vary</p></div>`;
+  return`<div class="celeb-section"><p class="sec-lbl">${t('famousCity')} ${selectedCity.name}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
 }
 
 /* ── Timeline ── */
