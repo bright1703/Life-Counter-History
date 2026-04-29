@@ -496,24 +496,38 @@ function showAllWiki(total) {
   if (btn) { btn.textContent = `Showing all ${total} events`; btn.disabled = true; btn.style.opacity='0.5'; }
 }
 
-/* ── Same-birthday celebrities ── */
-// Notability keywords covering all famous people categories
-const NOTABLE_TERMS = /actor|actress|singer|musician|composer|rapper|filmmaker|director|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|commander|conqueror|explorer|philosopher|scientist|physicist|mathematician|inventor|engineer|astronaut|cosmonaut|writer|author|novelist|poet|painter|sculptor|architect|photographer|journalist|economist|psychologist|biologist|chemist|astronomer|geographer|historian|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|nobel|laureate|entrepreneur|founder|ceo|billionaire|activist|reformer|suffragette|civil rights|bishop|saint|prophet|mythological|deity|monarch|chancellor|senator|congressm|dictator|revolutionary|warlord/i;
+/* ── Same-birthday famous people ── */
 
-function notabilityScore(b) {
-  const p = b.pages?.[0];
+// Tier 1: unmistakably world-famous roles (massive bonus)
+const TIER1 = /president of the united states|prime minister of (the )?uk|general secretary|emperor of|king of|queen of|pope|pharaoh|nobel (peace |prize |laureate)|world heavyweight|formula one world champion|fifa world (cup|player)|olympic gold|grammy award|oscar.winning|academy award|pulitzer|fields medal|turing award/i;
+// Tier 2: clearly famous profession
+const TIER2 = /american (actor|actress|singer|rapper|musician|director|filmmaker|comedian|athlete|footballer|basketball|tennis|swimmer|boxer|golfer|sprinter|gymnast|cyclist|cricketer|olympian)|british (actor|actress|singer|musician|director)|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|philosopher|physicist|mathematician|inventor|astronaut|novelist|poet|painter|sculptor|composer|conductor|politician|statesman|dictator|monarch|chancellor|senator|activist|saint|explorer|conquistador/i;
+// Tier 3: any notable person
+const TIER3 = /actor|actress|singer|musician|composer|rapper|filmmaker|director|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|entrepreneur|founder|scientist|biologist|chemist|astronomer|geographer|historian|journalist|model|comedian|influencer|reality/i;
+
+function notabilityScore(p, fullSummary) {
   if (!p) return 0;
   let score = 0;
-  // Has thumbnail = very likely notable
-  if (p.thumbnail) score += 40;
-  // Matches a famous-person category
-  const desc = (p.description||'').toLowerCase();
-  if (NOTABLE_TERMS.test(desc)) score += 30;
-  // Longer extract = more written about them
-  const extractLen = (p.extract||'').length;
-  score += Math.min(extractLen / 100, 20);
-  // More recent birth year = more likely people know them
-  score += Math.max(0, (b.year - 1400) / 60);
+  const desc = (p.description || '').toLowerCase();
+  const extract = (fullSummary?.extract || p.extract || '').toLowerCase();
+  const combined = desc + ' ' + extract;
+
+  // Photo is a strong signal Wikipedia editors care about this person
+  if (p.thumbnail?.source) score += 50;
+
+  // Tier bonuses
+  if (TIER1.test(combined)) score += 120;
+  else if (TIER2.test(combined)) score += 60;
+  else if (TIER3.test(combined)) score += 20;
+  else score -= 40; // penalize unknowns heavily
+
+  // Article length — genuinely famous people have long articles
+  const len = (fullSummary?.extract || '').length;
+  score += Math.min(len / 15, 60); // up to +60 for a 900-char extract
+
+  // Penalize very obscure descriptions
+  if (desc.includes('minor') || desc.includes('local') || desc.includes('regional')) score -= 30;
+
   return score;
 }
 
@@ -522,11 +536,36 @@ async function fetchBirthdayCelebs(birth) {
   const dd = String(birth.getDate()).padStart(2,'0');
   try {
     const d = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/${mm}/${dd}`).then(r=>r.json());
-    const births = (d.births||[]);
-    return births
-      .filter(b => b.pages?.length && b.pages[0].description)
-      .sort((a,b) => notabilityScore(b) - notabilityScore(a))
-      .slice(0, 16);
+    const births = (d.births||[]).filter(b => b.pages?.length && b.pages[0].description);
+
+    // Pre-filter: only people with a description (removes stubs)
+    // Take top 40 candidates by thumbnail presence for summary fetch
+    const candidates = births
+      .sort((a,b) => (b.pages[0].thumbnail?1:0) - (a.pages[0].thumbnail?1:0))
+      .slice(0, 40);
+
+    // Fetch full summaries in parallel for much better scoring
+    const summaries = await Promise.allSettled(
+      candidates.map(b => {
+        const slug = b.pages[0].titles?.canonical || b.pages[0].title || '';
+        return slug
+          ? fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`).then(r=>r.json()).catch(()=>null)
+          : Promise.resolve(null);
+      })
+    );
+
+    // Score and sort
+    const scored = candidates.map((b, i) => {
+      const full = summaries[i].status === 'fulfilled' ? summaries[i].value : null;
+      // Merge thumbnail from full summary if missing in onthisday response
+      if (full?.thumbnail && !b.pages[0].thumbnail) b.pages[0].thumbnail = full.thumbnail;
+      return { b, score: notabilityScore(b.pages[0], full) };
+    });
+
+    return scored
+      .sort((a,b) => b.score - a.score)
+      .slice(0, 16)
+      .map(s => s.b);
   } catch(e) { return []; }
 }
 
@@ -583,7 +622,7 @@ async function fetchLocalCelebs(city) {
     const people = summaries
       .filter(s => s.status==='fulfilled' && s.value?.type==='standard' && s.value?.description)
       .map(s => s.value)
-      .filter(p => NOTABLE_TERMS.test(p.description||''))
+      .filter(p => TIER2.test(p.description||'') || TIER3.test(p.description||''))
       .slice(0, 8);
     return people;
   } catch(e) { return []; }
