@@ -649,8 +649,10 @@ function buildTimeline(birthYear, countryCode, countryName) {
 }
 
 /* ── Live counters ── */
+let _counterInterval = null;
 function startLiveCounters(birth) {
-  setInterval(()=>{
+  if (_counterInterval) clearInterval(_counterInterval);
+  _counterInterval = setInterval(()=>{
     const now   = new Date();
     const days  = Math.floor((now-birth)/86400000);
     const beats = Math.round(Math.floor((now-birth)/1000)*70/60);
