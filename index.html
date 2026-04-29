@@ -1,33 +1,11 @@
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
-    <meta charset="UTF-8"/>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-    
-    <title>BornHistory — Your Life in Numbers & History</title>
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
-<link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png">
-    <meta name="description" content="Discover what happened on your birthday, historical prices, and your life in numbers. Free in 11 languages.">
-    <link rel="canonical" href="https://bornhistory.com/">
-
-    <meta property="og:title" content="BornHistory — Your Life in Numbers & History">
-    <meta property="og:description" content="Enter your birthday. See what happened that day, historical prices, and more.">
-    <meta property="og:image" content="https://bornhistory.com/preview.png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:url" content="https://bornhistory.com/">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="BornHistory">
-
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="BornHistory — Your Life in Numbers & History">
-    <meta name="twitter:description" content="Enter your birthday. Discover your place in history.">
-    <meta name="twitter:image" content="https://bornhistory.com/preview.png">
-
-    </head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>World Life Tracker</title>
 <!-- AdSense placeholder – replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8902130785981866" crossorigin="anonymous"></script>
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -265,6 +243,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
   .stat-card,.celeb-card,.wiki-item,.tl-item,.price-card,.media-card,.astro-card{break-inside:avoid}
   *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+/* ── hide empty adsense ── */
+ins.adsbygoogle[data-ad-status="unfilled"],
+ins.adsbygoogle:not([data-ad-status]){
+  display:none!important;
+}
+ins.adsbygoogle[data-ad-status="filled"]{
+  display:block!important;
+}
 </style>
 </head>
 <body>
@@ -314,8 +300,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 </div>
 
 <!-- AdSense top slot -->
-<div style="max-width:720px;margin:0 auto 24px;padding:0 20px" class="no-print">
-  <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+<div id="ad-top" style="max-width:720px;margin:0 auto 8px;padding:0 20px" class="no-print">
+  <ins class="adsbygoogle" style="display:block;min-height:0" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
   <script>(adsbygoogle=window.adsbygoogle||[]).push({})</script>
 </div>
 
@@ -685,17 +671,18 @@ async function runTracker(){
     const lifeExpectancy=72;
     const lifePercent=Math.min(99,(daysLived/(lifeExpectancy*365.25)*100)).toFixed(1);
 
-    const [weatherHTML,wikiEvents,bdCelebs,localPeople]=await Promise.all([
+    const [weatherHTML,wikiEvents,bdCelebs,localPeople,btcLivePrice]=await Promise.all([
       buildWeather(dobVal,birth,year),
       fetchAllBirthdayEvents(birth),
       fetchBirthdayCelebs(birth),
-      fetchLocalCelebs(selectedCity)
+      fetchLocalCelebs(selectedCity),
+      fetchBtcPrice()
     ]);
 
     const statsHTML=buildStats(daysLived,heartbeats,orbits,breaths,sleepHrs,blinks,lifePercent);
     const astroHTML=buildAstro(birth,year,daysLived);
     const pricesHTML=buildPrices(year);
-    const btcHTML=buildBitcoin(year);
+    const btcHTML=buildBitcoin(year,btcLivePrice);
     const mediaHTML=buildMedia(year);
     const popHTML=buildPopulation(year,daysLived);
     const mapHTML=buildMap();
@@ -726,8 +713,8 @@ async function runTracker(){
         ${wikiHTML}
         ${timelineHTML}
         <div class="divider no-print"></div>
-        <div class="no-print" style="text-align:center;padding-bottom:20px">
-          <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0987654321" data-ad-format="auto" data-full-width-responsive="true"></ins>
+        <div class="no-print" style="text-align:center;padding-bottom:8px">
+          <ins class="adsbygoogle" style="display:block;min-height:0" data-ad-client="ca-pub-XXXXXXXXXXXXXXXX" data-ad-slot="0987654321" data-ad-format="auto" data-full-width-responsive="true"></ins>
           <script>(adsbygoogle=window.adsbygoogle||[]).push({})<\/script>
         </div>
       </div>`;
@@ -842,21 +829,42 @@ function buildPrices(year){
 }
 
 /* ── Bitcoin Block ── */
-function buildBitcoin(year){
+async function fetchBtcPrice(){
+  try{
+    // CoinGecko free API — no key needed
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const d = await r.json();
+    return d?.bitcoin?.usd || null;
+  }catch(e){
+    // Fallback: try alternative free endpoint
+    try{
+      const r2 = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+      const d2 = await r2.json();
+      return parseFloat(d2?.data?.amount) || null;
+    }catch(e2){ return null; }
+  }
+}
+
+function buildBitcoin(year, btcLivePrice){
   const btcLaunchYear = 2009;
-  const btcLaunchPrice = 0.001; // price in 2009 (pizzas era, ~$0.001)
-  const btcNowPrice = 97000; // approximate 2025 price in USD
+  const btcLaunchPrice = 0.001;
+  const nowYear = new Date().getFullYear();
+  const btcNowPrice = btcLivePrice || 95000; // live price or fallback
   const yearsFromBirth = btcLaunchYear - year;
   const ageAtLaunch = yearsFromBirth > 0 ? yearsFromBirth : null;
-  const profit = ((btcNowPrice - btcLaunchPrice) * 1).toFixed(0);
+  const profit = (btcNowPrice - btcLaunchPrice).toLocaleString('en-US', {maximumFractionDigits:0});
+  const multiplier = Math.round(btcNowPrice / btcLaunchPrice).toLocaleString();
+  const priceFormatted = btcNowPrice.toLocaleString('en-US', {maximumFractionDigits:0});
+  const isLive = !!btcLivePrice;
+  const yearsSince = nowYear - btcLaunchYear;
 
-  let timeText = '';
+  let birthRelation = '';
   if(yearsFromBirth > 0){
-    timeText = `${yearsFromBirth} ${t('btcYearsLabel')} — ${t('btcYearsAfter')} ${yearsFromBirth} ${t('btcYearsBefore').replace('лет до','').trim()} ${t('btcYearsLabel')}`;
+    birthRelation = `Bitcoin launched ${yearsFromBirth} ${t('btcYearsLabel')}`;
   } else if(yearsFromBirth === 0){
-    timeText = `Bitcoin launched the same year you were born (${year})`;
+    birthRelation = `Bitcoin launched the same year you were born`;
   } else {
-    timeText = `You were born ${Math.abs(yearsFromBirth)} years after Bitcoin launched`;
+    birthRelation = `You were born ${Math.abs(yearsFromBirth)} years after Bitcoin launched`;
   }
 
   return `
@@ -867,19 +875,23 @@ function buildBitcoin(year){
           <div class="btc-logo">₿</div>
           <div>
             <div class="btc-title">${t('btcTitle')}</div>
-            <div class="btc-sub">Bitcoin launched in January 2009 — ${yearsFromBirth > 0 ? yearsFromBirth + ' ' + t('btcYearsLabel') : 'after you were born'}</div>
+            <div class="btc-sub">${birthRelation}</div>
           </div>
         </div>
         <div class="btc-stats">
-          ${ageAtLaunch !== null ? `<div class="btc-stat"><div class="btc-stat-lbl">${t('btcAgeAtLaunch')}</div><div class="btc-stat-val">${ageAtLaunch}</div><div class="btc-stat-sub">years old</div></div>` : ''}
-          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcLaunchPrice')}</div><div class="btc-stat-val">~$0.001</div><div class="btc-stat-sub">per BTC</div></div>
-          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcNowPrice')}</div><div class="btc-stat-val">~$97,000</div><div class="btc-stat-sub">per BTC (~2025)</div></div>
-          <div class="btc-stat"><div class="btc-stat-lbl">Years since Bitcoin</div><div class="btc-stat-val">${new Date().getFullYear() - btcLaunchYear}</div><div class="btc-stat-sub">years of existence</div></div>
+          ${ageAtLaunch !== null ? `<div class="btc-stat"><div class="btc-stat-lbl">${t('btcAgeAtLaunch')}</div><div class="btc-stat-val">${ageAtLaunch}</div><div class="btc-stat-sub">years old in 2009</div></div>` : ''}
+          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcLaunchPrice')}</div><div class="btc-stat-val">~$0.001</div><div class="btc-stat-sub">per BTC (Jan 2009)</div></div>
+          <div class="btc-stat">
+            <div class="btc-stat-lbl">${t('btcNowPrice')}</div>
+            <div class="btc-stat-val">$${priceFormatted}</div>
+            <div class="btc-stat-sub">${isLive ? '🟢 Live price' : '⚪ Estimated'} · ${nowYear}</div>
+          </div>
+          <div class="btc-stat"><div class="btc-stat-lbl">Years since Bitcoin</div><div class="btc-stat-val">${yearsSince}</div><div class="btc-stat-sub">years of existence</div></div>
         </div>
         <div class="btc-highlight">
-          <div class="btc-hl-label">💰 ${t('btcIf1')} (1 BTC for ~$0.001)</div>
-          <div class="btc-hl-val">+$96,999.999</div>
-          <div class="btc-hl-sub">${t('btcProfit')} · ~97,000,000x return</div>
+          <div class="btc-hl-label">💰 ${t('btcIf1')} (1 BTC for ~$0.001 in 2009)</div>
+          <div class="btc-hl-val">+$${profit}</div>
+          <div class="btc-hl-sub">${t('btcProfit')} · ~${multiplier}x return</div>
         </div>
       </div>
     </div>`;
@@ -1020,7 +1032,7 @@ function buildShare(days,hb,orbits){
         <a class="share-btn share-tg" href="https://t.me/share/url?url=${url}&text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">✈️ Telegram</a>
         <button class="share-btn share-copy" onclick="copyLink(this)">${t('shareCopy')}</button>
         <button class="act-btn primary" onclick="window.print()">🖨️ ${t('printPdf')}</button>
-        <a class="act-btn kofi-btn" href="https://ko-fi.com/bornhistory" target="_blank" rel="noopener">${t('kofi')}</a>
+        <a class="act-btn kofi-btn" href="https://ko-fi.com/YOUR_KOFI_ID" target="_blank" rel="noopener">${t('kofi')}</a>
       </div>
     </div>`;
 }
@@ -1293,6 +1305,29 @@ function getRegionalEvents(start,end,code){
     id:[{year:1945,text:'Indonesia declares independence'},{year:1998,text:'Asian crisis triggers fall of Suharto'},{year:2004,text:'Indian Ocean tsunami kills 167,000 in Aceh'},{year:2019,text:'Indonesia announces capital move to Nusantara'}],
   };
   return(db[code]||[]).filter(e=>e.year>=start&&e.year<=end).slice(0,14).map(e=>({...e,type:'regional'}));
+}
+
+/* ── collapse empty ad wrappers ── */
+function collapseEmptyAds(){
+  document.querySelectorAll('ins.adsbygoogle').forEach(ins=>{
+    const status=ins.getAttribute('data-ad-status');
+    const parent=ins.closest('div');
+    if(!status||status==='unfilled'){
+      ins.style.display='none';
+      if(parent&&!parent.querySelector('ins[data-ad-status="filled"]')){
+        parent.style.cssText='display:none!important;margin:0!important;padding:0!important;height:0!important';
+      }
+    }
+  });
+}
+setTimeout(collapseEmptyAds,2500);
+setTimeout(collapseEmptyAds,5000);
+if(window.MutationObserver){
+  const obs=new MutationObserver(collapseEmptyAds);
+  setTimeout(()=>{
+    document.querySelectorAll('ins.adsbygoogle').forEach(ins=>
+      obs.observe(ins,{attributes:true,attributeFilter:['data-ad-status']}));
+  },500);
 }
 </script>
 </body>
