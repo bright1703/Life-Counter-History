@@ -327,4 +327,1083 @@ ins.adsbygoogle[data-ad-status="filled"]{
       <option value="en">🇬🇧 English</option>
       <option value="ru">🇷🇺 Русский</option>
       <option value="zh">🇨🇳 中文</option>
-      <option valu
+      <option value="ja">🇯🇵 日本語</option>
+      <option value="ko">🇰🇷 한국어</option>
+      <option value="de">🇩🇪 Deutsch</option>
+      <option value="fr">🇫🇷 Français</option>
+      <option value="es">🇪🇸 Español</option>
+      <option value="pt">🇧🇷 Português</option>
+      <option value="it">🇮🇹 Italiano</option>
+      <option value="th">🇹🇭 ภาษาไทย</option>
+    </select>
+  </div>
+  <a class="site-logo" href="#">born<span>history</span>.com</a>
+  <button class="tb-btn" onclick="toggleTheme()" id="theme-btn">
+    <span id="theme-icon">🌙</span><span id="theme-label">Dark mode</span>
+  </button>
+</div>
+
+<div class="header">
+  <h1 id="hdr-title">World Life Tracker</h1>
+  <p id="hdr-sub">Discover the world as it was — and is — around your life</p>
+</div>
+
+<div class="form-wrap">
+  <div class="form-card">
+    <div class="form-row">
+      <div class="field">
+        <label id="lbl-dob">Date of birth</label>
+        <input type="date" id="dob" max="2024-12-31" min="1920-01-01"/>
+      </div>
+      <div class="field autocomplete-wrap">
+        <label id="lbl-city">City</label>
+        <input type="text" id="city-input" placeholder="Type a city…" autocomplete="off"/>
+        <div id="city-suggestions"></div>
+      </div>
+    </div>
+    <button class="btn-main" id="go-btn" onclick="runTracker()" id="btn-explore">Explore my life</button>
+  </div>
+</div>
+
+<!-- AdSense top slot -->
+<div id="ad-top" style="max-width:720px;margin:0 auto 8px;padding:0 20px" class="no-print">
+  <ins class="adsbygoogle" style="display:block;min-height:0" data-ad-client="ca-pub-8902130785981866" data-ad-slot="1234567890" data-ad-format="auto" data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle=window.adsbygoogle||[]).push({})</script>
+</div>
+
+<div id="results-area"></div>
+
+<footer class="site-footer no-print">
+  <div class="footer-logo">born<span>history</span>.com</div>
+  <div class="footer-copy">© 2026–2027 bornhistory.com · Made by S.F.</div>
+</footer>
+
+<script>
+/* ══════════════════════════════════════
+   TRANSLATIONS
+══════════════════════════════════════ */
+const T = {
+  en:{
+    title:'World Life Tracker',sub:'Discover the world as it was — and is — around your life',
+    dob:'Date of birth',city:'City',explore:'Explore my life',loading:'Fetching your life data',
+    daysLived:'Days lived',heartbeats:'Heartbeats',orbits:'Earth orbits',
+    breathsTaken:'Breaths taken',sleepHours:'Hours slept',blinks:'Times blinked',
+    lifeProgress:'Life progress',avgBpm:'~70 bpm average',aroundSun:'around the Sun',
+    weatherBirth:'Weather at birth',maxTemp:'Max temperature on',
+    hottest:'One of the hottest days that year',coldest:'One of the coldest days that year',
+    warmer:'Warmer than average that year',colder:'Colder than average that year',typical:'Typical temperature that year',
+    yourPlace:'Your place in the world',
+    pricesTitle:'Historical prices in your birth year',
+    pricesBread:'Bread (loaf)',pricesGas:'Petrol (litre)',pricesGold:'Gold (troy oz)',pricesNow:'Today',
+    musicTitle:'Top songs of your birth year',filmTitle:'Top films of your birth year',
+    chart:'Chart',
+    zodiac:'Western Zodiac',chinese:'Chinese Zodiac',lifeNum:'Life path number',
+    planetAge:'Your age on other planets',
+    famousBirthday:'Famous people sharing your birthday',
+    famousCity:'Notable people from',clickWiki:'Click any card to open Wikipedia',
+    eventsTitle:'Notable events on',eventsCount:'events recorded on your birthday in history',
+    showAll:'Show all',events:'events ↓',
+    timelineTitle:'Your lifetime timeline',global:'Global',regional:'Regional',
+    shareTitle:'Share your life card',
+    shareCopy:'Copy link',shareCopied:'Copied!',
+    shareText:'I\'ve lived {days} days, my heart has beaten {hb} times, and I\'ve made {orbits} trips around the Sun 🌍',
+    printPdf:'Print / PDF',kofi:'Buy me a coffee ☕',
+    population:'World population at birth',popNow:'Today\'s population',popBorn:'People born after you',
+    btcTitle:'Bitcoin & Your Life',
+    btcYearsBefore:'Years before Bitcoin was born after you',
+    btcYearsAfter:'Bitcoin appeared',
+    btcAgeAtLaunch:'Your age when Bitcoin launched',
+    btcIf1:'If you had bought 1 BTC at launch',
+    btcLaunchPrice:'Bitcoin launch price (2009)',
+    btcNowPrice:'Bitcoin price today (~2025)',
+    btcProfit:'Profit if sold today',
+    btcYearsLabel:'years after your birth',
+    wikiOpen:'↗ Wikipedia',
+  },
+  th:{
+    title:'ตัวติดตามชีวิตโลก',sub:'ค้นพบโลกในวันที่คุณเกิด',
+    dob:'วันเกิด',city:'เมือง',explore:'สำรวจชีวิตของฉัน',loading:'กำลังโหลดข้อมูล',
+    daysLived:'วันที่มีชีวิต',heartbeats:'จังหวะการเต้นของหัวใจ',orbits:'วงโคจรของโลก',
+    breathsTaken:'การหายใจ',sleepHours:'ชั่วโมงนอนหลับ',blinks:'ครั้งที่กะพริบตา',
+    lifeProgress:'ความคืบหน้าชีวิต',avgBpm:'เฉลี่ย ~70 ครั้ง/นาที',aroundSun:'รอบดวงอาทิตย์',
+    weatherBirth:'สภาพอากาศตอนเกิด',maxTemp:'อุณหภูมิสูงสุดเมื่อ',
+    hottest:'หนึ่งในวันที่ร้อนที่สุดของปีนั้น',coldest:'หนึ่งในวันที่หนาวที่สุดของปีนั้น',
+    warmer:'อุ่นกว่าค่าเฉลี่ยของปีนั้น',colder:'หนาวกว่าค่าเฉลี่ยของปีนั้น',typical:'อุณหภูมิปกติของปีนั้น',
+    yourPlace:'สถานที่ของคุณในโลก',
+    pricesTitle:'ราคาประวัติศาสตร์ในปีเกิดของคุณ',
+    pricesBread:'ขนมปัง (1 ก้อน)',pricesGas:'น้ำมัน (ลิตร)',pricesGold:'ทอง (ทรอยออนซ์)',pricesNow:'วันนี้',
+    musicTitle:'เพลงยอดนิยมปีเกิดของคุณ',filmTitle:'ภาพยนตร์ยอดนิยมปีเกิดของคุณ',chart:'ชาร์ต',
+    zodiac:'ราศีตะวันตก',chinese:'นักษัตรจีน',lifeNum:'เลขเส้นทางชีวิต',planetAge:'อายุของคุณบนดาวเคราะห์อื่น',
+    famousBirthday:'คนดังที่มีวันเกิดเดียวกัน',famousCity:'คนมีชื่อเสียงจาก',clickWiki:'คลิกการ์ดเพื่อเปิด Wikipedia',
+    eventsTitle:'เหตุการณ์สำคัญในวันนี้',eventsCount:'เหตุการณ์ที่บันทึกในวันเกิดของคุณ',showAll:'แสดงทั้งหมด',events:'เหตุการณ์ ↓',
+    timelineTitle:'ไทม์ไลน์ชีวิตของคุณ',global:'ระดับโลก',regional:'ระดับภูมิภาค',
+    shareTitle:'แชร์การ์ดชีวิตของคุณ',shareCopy:'คัดลอกลิงก์',shareCopied:'คัดลอกแล้ว!',
+    shareText:'ฉันมีชีวิตอยู่มาแล้ว {days} วัน หัวใจเต้นไปแล้ว {hb} ครั้ง และโคจรรอบดวงอาทิตย์ {orbits} รอบ 🌍',
+    printPdf:'พิมพ์ / PDF',kofi:'เลี้ยงกาแฟฉันหน่อย ☕',
+    population:'ประชากรโลกตอนที่คุณเกิด',popNow:'ประชากรโลกวันนี้',popBorn:'คนที่เกิดหลังจากคุณ',
+    btcTitle:'Bitcoin & ชีวิตของคุณ',
+    btcYearsBefore:'ปีก่อนที่ Bitcoin จะเกิด',
+    btcYearsAfter:'Bitcoin ปรากฏขึ้น',
+    btcAgeAtLaunch:'อายุของคุณเมื่อ Bitcoin เปิดตัว',
+    btcIf1:'ถ้าคุณซื้อ 1 BTC ตอนเปิดตัว',
+    btcLaunchPrice:'ราคา Bitcoin ตอนเปิดตัว (2009)',
+    btcNowPrice:'ราคา Bitcoin วันนี้ (~2025)',
+    btcProfit:'กำไรถ้าขายวันนี้',
+    btcYearsLabel:'ปีหลังจากที่คุณเกิด',
+    wikiOpen:'↗ Wikipedia',
+  },
+  ru:{
+    title:'Трекер жизни мира',sub:'Узнайте, каким был мир в день вашего рождения',
+    dob:'Дата рождения',city:'Город',explore:'Исследовать мою жизнь',loading:'Загрузка данных',
+    daysLived:'Дней прожито',heartbeats:'Ударов сердца',orbits:'Оборотов Земли',
+    breathsTaken:'Сделано вдохов',sleepHours:'Часов сна',blinks:'Моргания',
+    lifeProgress:'Прогресс жизни',avgBpm:'~70 уд/мин',aroundSun:'вокруг Солнца',
+    weatherBirth:'Погода при рождении',maxTemp:'Макс. температура',
+    hottest:'Один из самых жарких дней года',coldest:'Один из самых холодных дней года',
+    warmer:'Теплее среднего в тот год',colder:'Холоднее среднего в тот год',typical:'Обычная температура',
+    yourPlace:'Ваше место в мире',
+    pricesTitle:'Исторические цены в год рождения',
+    pricesBread:'Хлеб (булка)',pricesGas:'Бензин (литр)',pricesGold:'Золото (тройская унция)',pricesNow:'Сейчас',
+    musicTitle:'Топ песни года рождения',filmTitle:'Топ фильмы года рождения',
+    chart:'Чарт',
+    zodiac:'Западный зодиак',chinese:'Китайский зодиак',lifeNum:'Число жизненного пути',
+    planetAge:'Ваш возраст на других планетах',
+    famousBirthday:'Знаменитости с вашим днём рождения',
+    famousCity:'Известные люди из',clickWiki:'Нажмите на карточку для открытия Wikipedia',
+    eventsTitle:'События в этот день',eventsCount:'событий в истории в ваш день рождения',
+    showAll:'Показать все',events:'событий ↓',
+    timelineTitle:'Хронология вашей жизни',global:'Глобальные',regional:'Региональные',
+    shareTitle:'Поделиться карточкой жизни',
+    shareCopy:'Копировать ссылку',shareCopied:'Скопировано!',
+    shareText:'Я прожил {days} дней, моё сердце ударило {hb} раз, я совершил {orbits} оборота вокруг Солнца 🌍',
+    printPdf:'Печать / PDF',kofi:'Угости кофе ☕',
+    population:'Население Земли при рождении',popNow:'Население сегодня',popBorn:'Людей родилось после вас',
+    btcTitle:'Bitcoin и ваша жизнь',btcYearsBefore:'лет до появления Bitcoin',btcYearsAfter:'Bitcoin появился',btcAgeAtLaunch:'Ваш возраст при запуске Bitcoin',btcIf1:'Если бы вы купили 1 BTC при запуске',btcLaunchPrice:'Цена Bitcoin при запуске (2009)',btcNowPrice:'Цена Bitcoin сегодня (~2025)',btcProfit:'Прибыль при продаже сегодня',btcYearsLabel:'лет после вашего рождения',wikiOpen:'↗ Wikipedia',
+  },
+  zh:{
+    title:'世界人生追踪器',sub:'发现您出生时的世界',
+    dob:'出生日期',city:'城市',explore:'探索我的人生',loading:'正在加载数据',
+    daysLived:'已活天数',heartbeats:'心跳次数',orbits:'地球公转次数',
+    breathsTaken:'呼吸次数',sleepHours:'睡眠小时',blinks:'眨眼次数',
+    lifeProgress:'人生进度',avgBpm:'约70次/分钟',aroundSun:'绕太阳',
+    weatherBirth:'出生时的天气',maxTemp:'最高温度',
+    hottest:'那年最热的日子之一',coldest:'那年最冷的日子之一',
+    warmer:'比那年平均气温高',colder:'比那年平均气温低',typical:'那年典型气温',
+    yourPlace:'您在世界上的位置',
+    pricesTitle:'出生年份的历史价格',pricesBread:'面包（条）',pricesGas:'汽油（升）',pricesGold:'黄金（盎司）',pricesNow:'今天',
+    musicTitle:'出生年份热门歌曲',filmTitle:'出生年份热门电影',chart:'排行榜',
+    zodiac:'西方星座',chinese:'中国生肖',lifeNum:'生命之路数字',planetAge:'您在其他星球的年龄',
+    famousBirthday:'与您同生日的名人',famousCity:'来自的名人',clickWiki:'点击卡片打开维基百科',
+    eventsTitle:'历史上这一天',eventsCount:'条历史记录',showAll:'显示全部',events:'个事件 ↓',
+    timelineTitle:'您的人生时间轴',global:'全球',regional:'地区',
+    shareTitle:'分享您的人生卡',shareCopy:'复制链接',shareCopied:'已复制！',
+    shareText:'我已活了{days}天，心跳{hb}次，绕太阳转了{orbits}圈 🌍',
+    printPdf:'打印 / PDF',kofi:'请我喝杯咖啡 ☕',
+    population:'出生时世界人口',popNow:'今日人口',popBorn:'您出生后出生的人',
+    btcTitle:'比特币与您的生活',btcYearsBefore:'比特币诞生前的年数',btcYearsAfter:'比特币出现',btcAgeAtLaunch:'比特币推出时您的年龄',btcIf1:'如果您在推出时购买了1个比特币',btcLaunchPrice:'比特币推出价格（2009年）',btcNowPrice:'今日比特币价格（约2025年）',btcProfit:'今日出售利润',btcYearsLabel:'您出生后的年数',wikiOpen:'↗ Wikipedia',
+  },
+  ja:{
+    title:'ワールドライフトラッカー',sub:'あなたの誕生日の世界を発見しよう',
+    dob:'生年月日',city:'都市',explore:'人生を探索する',loading:'データを読み込み中',
+    daysLived:'生きた日数',heartbeats:'心拍数',orbits:'地球の公転回数',
+    breathsTaken:'呼吸回数',sleepHours:'睡眠時間',blinks:'まばたき回数',
+    lifeProgress:'人生の進捗',avgBpm:'平均70拍/分',aroundSun:'太陽の周回',
+    weatherBirth:'誕生日の天気',maxTemp:'最高気温',
+    hottest:'その年最も暑い日の一つ',coldest:'その年最も寒い日の一つ',
+    warmer:'その年の平均より暖かい',colder:'その年の平均より寒い',typical:'その年の典型的な気温',
+    yourPlace:'世界のあなたの場所',
+    pricesTitle:'生まれた年の歴史的な価格',pricesBread:'パン（1本）',pricesGas:'ガソリン（1リットル）',pricesGold:'金（トロイオンス）',pricesNow:'現在',
+    musicTitle:'生まれた年のヒット曲',filmTitle:'生まれた年の映画',chart:'チャート',
+    zodiac:'西洋星座',chinese:'中国の干支',lifeNum:'ライフパス数',planetAge:'他の惑星での年齢',
+    famousBirthday:'あなたと同じ誕生日の有名人',famousCity:'出身の著名人',clickWiki:'カードをクリックしてWikipediaを開く',
+    eventsTitle:'この日の歴史的出来事',eventsCount:'件の歴史的記録',showAll:'すべて表示',events:'件 ↓',
+    timelineTitle:'あなたの生涯タイムライン',global:'グローバル',regional:'地域',
+    shareTitle:'ライフカードをシェア',shareCopy:'リンクをコピー',shareCopied:'コピーしました！',
+    shareText:'{days}日生きた、心臓は{hb}回鼓動し、太陽の周りを{orbits}回回りました 🌍',
+    printPdf:'印刷 / PDF',kofi:'コーヒーをおごって ☕',
+    population:'誕生時の世界人口',popNow:'今日の人口',popBorn:'あなたの後に生まれた人',
+    btcTitle:'ビットコインとあなたの人生',btcYearsBefore:'ビットコイン誕生前の年数',btcYearsAfter:'ビットコインが登場',btcAgeAtLaunch:'ビットコイン開始時のあなたの年齢',btcIf1:'開始時に1BTCを購入していたら',btcLaunchPrice:'ビットコイン開始価格（2009年）',btcNowPrice:'今日のビットコイン価格（約2025年）',btcProfit:'今日売却した場合の利益',btcYearsLabel:'あなたの誕生後の年数',wikiOpen:'↗ Wikipedia',
+  },
+  ko:{
+    title:'월드 라이프 트래커',sub:'당신이 태어났을 때의 세상을 발견하세요',
+    dob:'생년월일',city:'도시',explore:'내 인생 탐색하기',loading:'데이터 불러오는 중',
+    daysLived:'살아온 날',heartbeats:'심장 박동수',orbits:'지구 공전 횟수',
+    breathsTaken:'호흡 횟수',sleepHours:'수면 시간',blinks:'눈 깜빡임',
+    lifeProgress:'인생 진행도',avgBpm:'평균 70회/분',aroundSun:'태양 공전',
+    weatherBirth:'출생 시 날씨',maxTemp:'최고 기온',
+    hottest:'그 해 가장 더운 날 중 하나',coldest:'그 해 가장 추운 날 중 하나',
+    warmer:'그 해 평균보다 따뜻함',colder:'그 해 평균보다 추움',typical:'그 해 평균적인 기온',
+    yourPlace:'세계 속 당신의 위치',
+    pricesTitle:'출생 연도 역사적 가격',pricesBread:'빵 (한 덩이)',pricesGas:'휘발유 (리터)',pricesGold:'금 (트로이 온스)',pricesNow:'오늘',
+    musicTitle:'출생 연도 히트곡',filmTitle:'출생 연도 히트 영화',chart:'차트',
+    zodiac:'서양 별자리',chinese:'중국 띠',lifeNum:'인생 경로 숫자',planetAge:'다른 행성에서의 나이',
+    famousBirthday:'같은 생일의 유명인',famousCity:'출신 유명인',clickWiki:'카드를 클릭해 위키피디아 열기',
+    eventsTitle:'이날의 역사적 사건',eventsCount:'개의 역사적 기록',showAll:'전체 보기',events:'개 ↓',
+    timelineTitle:'내 인생 타임라인',global:'글로벌',regional:'지역',
+    shareTitle:'라이프 카드 공유',shareCopy:'링크 복사',shareCopied:'복사됨!',
+    shareText:'{days}일을 살았고, 심장은 {hb}번 뛰었으며, 태양 주위를 {orbits}바퀴 돌았습니다 🌍',
+    printPdf:'인쇄 / PDF',kofi:'커피 사주기 ☕',
+    population:'출생 시 세계 인구',popNow:'오늘의 인구',popBorn:'당신 이후 태어난 사람',
+    btcTitle:'비트코인과 당신의 삶',btcYearsBefore:'비트코인 탄생 전 년수',btcYearsAfter:'비트코인 등장',btcAgeAtLaunch:'비트코인 출시 당시 나이',btcIf1:'출시 때 1 BTC를 샀다면',btcLaunchPrice:'비트코인 출시 가격 (2009)',btcNowPrice:'오늘 비트코인 가격 (~2025)',btcProfit:'오늘 판매 시 수익',btcYearsLabel:'당신이 태어난 후 몇 년',wikiOpen:'↗ Wikipedia',
+  },
+  de:{
+    title:'Welt-Leben-Tracker',sub:'Entdecke die Welt, wie sie war und ist',
+    dob:'Geburtsdatum',city:'Stadt',explore:'Mein Leben erkunden',loading:'Daten werden geladen',
+    daysLived:'Gelebte Tage',heartbeats:'Herzschläge',orbits:'Erdumlaufbahnen',
+    breathsTaken:'Atemzüge',sleepHours:'Schlafstunden',blinks:'Augenblicke',
+    lifeProgress:'Lebensfortschritt',avgBpm:'~70 S/min Ø',aroundSun:'um die Sonne',
+    weatherBirth:'Wetter bei der Geburt',maxTemp:'Höchsttemperatur am',
+    hottest:'Einer der heißesten Tage des Jahres',coldest:'Einer der kältesten Tage des Jahres',
+    warmer:'Wärmer als der Jahresdurchschnitt',colder:'Kälter als der Jahresdurchschnitt',typical:'Typische Temperatur des Jahres',
+    yourPlace:'Dein Ort in der Welt',
+    pricesTitle:'Historische Preise in deinem Geburtsjahr',pricesBread:'Brot (Laib)',pricesGas:'Benzin (Liter)',pricesGold:'Gold (Troy-Unze)',pricesNow:'Heute',
+    musicTitle:'Top-Songs deines Geburtsjahres',filmTitle:'Top-Filme deines Geburtsjahres',chart:'Chart',
+    zodiac:'Westlicher Tierkreis',chinese:'Chinesisches Tierkreiszeichen',lifeNum:'Lebenspfadzahl',planetAge:'Dein Alter auf anderen Planeten',
+    famousBirthday:'Berühmte Menschen mit deinem Geburtstag',famousCity:'Bekannte Persönlichkeiten aus',clickWiki:'Klicke auf eine Karte, um Wikipedia zu öffnen',
+    eventsTitle:'Jedes wichtige Ereignis am',eventsCount:'Ereignisse an deinem Geburtstag',showAll:'Alle anzeigen',events:'Ereignisse ↓',
+    timelineTitle:'Deine Lebens-Timeline',global:'Global',regional:'Regional',
+    shareTitle:'Lebenskarte teilen',shareCopy:'Link kopieren',shareCopied:'Kopiert!',
+    shareText:'Ich habe {days} Tage gelebt, mein Herz schlug {hb} Mal und ich machte {orbits} Reisen um die Sonne 🌍',
+    printPdf:'Drucken / PDF',kofi:'Kauf mir einen Kaffee ☕',
+    population:'Weltbevölkerung bei Geburt',popNow:'Bevölkerung heute',popBorn:'Nach dir geborene Menschen',
+    btcTitle:'Bitcoin & Dein Leben',btcYearsBefore:'Jahre vor Bitcoin',btcYearsAfter:'Bitcoin erschien',btcAgeAtLaunch:'Dein Alter beim Bitcoin-Start',btcIf1:'Wenn du beim Start 1 BTC gekauft hättest',btcLaunchPrice:'Bitcoin-Startpreis (2009)',btcNowPrice:'Bitcoin-Preis heute (~2025)',btcProfit:'Gewinn bei heutigem Verkauf',btcYearsLabel:'Jahre nach deiner Geburt',wikiOpen:'↗ Wikipedia',
+  },
+  fr:{
+    title:'Traqueur de vie mondial',sub:'Découvrez le monde tel qu\'il était à votre naissance',
+    dob:'Date de naissance',city:'Ville',explore:'Explorer ma vie',loading:'Chargement des données',
+    daysLived:'Jours vécus',heartbeats:'Battements de cœur',orbits:'Orbites terrestres',
+    breathsTaken:'Respirations',sleepHours:'Heures de sommeil',blinks:'Clignements',
+    lifeProgress:'Progression de vie',avgBpm:'~70 bpm en moyenne',aroundSun:'autour du Soleil',
+    weatherBirth:'Météo à la naissance',maxTemp:'Température maximale le',
+    hottest:'L\'un des jours les plus chauds de l\'année',coldest:'L\'un des jours les plus froids de l\'année',
+    warmer:'Plus chaud que la moyenne annuelle',colder:'Plus froid que la moyenne annuelle',typical:'Température typique de l\'année',
+    yourPlace:'Votre place dans le monde',
+    pricesTitle:'Prix historiques de votre année de naissance',pricesBread:'Pain (baguette)',pricesGas:'Essence (litre)',pricesGold:'Or (once troy)',pricesNow:'Aujourd\'hui',
+    musicTitle:'Chansons populaires de votre année',filmTitle:'Films populaires de votre année',chart:'Classement',
+    zodiac:'Zodiaque occidental',chinese:'Zodiaque chinois',lifeNum:'Nombre de chemin de vie',planetAge:'Votre âge sur d\'autres planètes',
+    famousBirthday:'Célébrités partageant votre anniversaire',famousCity:'Personnalités de',clickWiki:'Cliquez sur une carte pour ouvrir Wikipedia',
+    eventsTitle:'Tous les événements notables le',eventsCount:'événements enregistrés à votre date',showAll:'Tout afficher',events:'événements ↓',
+    timelineTitle:'Chronologie de votre vie',global:'Mondial',regional:'Régional',
+    shareTitle:'Partager ma carte de vie',shareCopy:'Copier le lien',shareCopied:'Copié !',
+    shareText:'J\'ai vécu {days} jours, mon cœur a battu {hb} fois et j\'ai effectué {orbits} tours autour du Soleil 🌍',
+    printPdf:'Imprimer / PDF',kofi:'Offrez-moi un café ☕',
+    population:'Population mondiale à la naissance',popNow:'Population aujourd\'hui',popBorn:'Personnes nées après vous',
+    btcTitle:'Bitcoin & Votre Vie',btcYearsBefore:'ans avant Bitcoin',btcYearsAfter:'Bitcoin est apparu',btcAgeAtLaunch:'Votre âge au lancement de Bitcoin',btcIf1:'Si vous aviez acheté 1 BTC au lancement',btcLaunchPrice:'Prix Bitcoin au lancement (2009)',btcNowPrice:'Prix Bitcoin aujourd\'hui (~2025)',btcProfit:'Bénéfice si vendu aujourd\'hui',btcYearsLabel:'ans après votre naissance',wikiOpen:'↗ Wikipedia',
+  },
+  es:{
+    title:'Rastreador de vida mundial',sub:'Descubre el mundo tal como era en tu nacimiento',
+    dob:'Fecha de nacimiento',city:'Ciudad',explore:'Explorar mi vida',loading:'Cargando datos',
+    daysLived:'Días vividos',heartbeats:'Latidos del corazón',orbits:'Órbitas terrestres',
+    breathsTaken:'Respiraciones',sleepHours:'Horas de sueño',blinks:'Parpadeos',
+    lifeProgress:'Progreso de vida',avgBpm:'~70 lpm promedio',aroundSun:'alrededor del Sol',
+    weatherBirth:'Clima al nacer',maxTemp:'Temperatura máxima el',
+    hottest:'Uno de los días más calurosos del año',coldest:'Uno de los días más fríos del año',
+    warmer:'Más cálido que el promedio anual',colder:'Más frío que el promedio anual',typical:'Temperatura típica del año',
+    yourPlace:'Tu lugar en el mundo',
+    pricesTitle:'Precios históricos de tu año de nacimiento',pricesBread:'Pan (hogaza)',pricesGas:'Gasolina (litro)',pricesGold:'Oro (onza troy)',pricesNow:'Hoy',
+    musicTitle:'Canciones populares de tu año',filmTitle:'Películas populares de tu año',chart:'Lista',
+    zodiac:'Zodiaco occidental',chinese:'Zodiaco chino',lifeNum:'Número de camino de vida',planetAge:'Tu edad en otros planetas',
+    famousBirthday:'Famosos que comparten tu cumpleaños',famousCity:'Personalidades de',clickWiki:'Haz clic en una tarjeta para abrir Wikipedia',
+    eventsTitle:'Todos los eventos notables el',eventsCount:'eventos registrados en tu fecha',showAll:'Mostrar todo',events:'eventos ↓',
+    timelineTitle:'Cronología de tu vida',global:'Global',regional:'Regional',
+    shareTitle:'Compartir mi tarjeta de vida',shareCopy:'Copiar enlace',shareCopied:'¡Copiado!',
+    shareText:'He vivido {days} días, mi corazón ha latido {hb} veces y he dado {orbits} vueltas alrededor del Sol 🌍',
+    printPdf:'Imprimir / PDF',kofi:'Invítame un café ☕',
+    population:'Población mundial al nacer',popNow:'Población hoy',popBorn:'Personas nacidas después de ti',
+    btcTitle:'Bitcoin y Tu Vida',btcYearsBefore:'años antes de Bitcoin',btcYearsAfter:'Bitcoin apareció',btcAgeAtLaunch:'Tu edad cuando se lanzó Bitcoin',btcIf1:'Si hubieras comprado 1 BTC en el lanzamiento',btcLaunchPrice:'Precio de Bitcoin en el lanzamiento (2009)',btcNowPrice:'Precio de Bitcoin hoy (~2025)',btcProfit:'Beneficio si vendes hoy',btcYearsLabel:'años después de tu nacimiento',wikiOpen:'↗ Wikipedia',
+  },
+  pt:{
+    title:'Rastreador de vida mundial',sub:'Descubra o mundo como era no seu nascimento',
+    dob:'Data de nascimento',city:'Cidade',explore:'Explorar minha vida',loading:'Carregando dados',
+    daysLived:'Dias vividos',heartbeats:'Batimentos cardíacos',orbits:'Órbitas terrestres',
+    breathsTaken:'Respirações',sleepHours:'Horas de sono',blinks:'Piscadas',
+    lifeProgress:'Progresso de vida',avgBpm:'~70 bpm em média',aroundSun:'ao redor do Sol',
+    weatherBirth:'Clima ao nascer',maxTemp:'Temperatura máxima em',
+    hottest:'Um dos dias mais quentes do ano',coldest:'Um dos dias mais frios do ano',
+    warmer:'Mais quente que a média anual',colder:'Mais frio que a média anual',typical:'Temperatura típica do ano',
+    yourPlace:'Seu lugar no mundo',
+    pricesTitle:'Preços históricos no seu ano de nascimento',pricesBread:'Pão (baguete)',pricesGas:'Combustível (litro)',pricesGold:'Ouro (onça troy)',pricesNow:'Hoje',
+    musicTitle:'Músicas populares do seu ano',filmTitle:'Filmes populares do seu ano',chart:'Parada',
+    zodiac:'Zodíaco ocidental',chinese:'Zodíaco chinês',lifeNum:'Número do caminho de vida',planetAge:'Sua idade em outros planetas',
+    famousBirthday:'Famosos com seu aniversário',famousCity:'Personalidades de',clickWiki:'Clique em um cartão para abrir a Wikipedia',
+    eventsTitle:'Todos os eventos notáveis em',eventsCount:'eventos registrados na sua data',showAll:'Mostrar tudo',events:'eventos ↓',
+    timelineTitle:'Linha do tempo da sua vida',global:'Global',regional:'Regional',
+    shareTitle:'Compartilhar meu cartão de vida',shareCopy:'Copiar link',shareCopied:'Copiado!',
+    shareText:'Vivi {days} dias, meu coração bateu {hb} vezes e dei {orbits} voltas ao redor do Sol 🌍',
+    printPdf:'Imprimir / PDF',kofi:'Me pague um café ☕',
+    population:'População mundial ao nascer',popNow:'População hoje',popBorn:'Pessoas nascidas depois de você',
+    btcTitle:'Bitcoin e Sua Vida',btcYearsBefore:'anos antes do Bitcoin',btcYearsAfter:'O Bitcoin surgiu',btcAgeAtLaunch:'Sua idade no lançamento do Bitcoin',btcIf1:'Se você tivesse comprado 1 BTC no lançamento',btcLaunchPrice:'Preço do Bitcoin no lançamento (2009)',btcNowPrice:'Preço do Bitcoin hoje (~2025)',btcProfit:'Lucro se vendesse hoje',btcYearsLabel:'anos após seu nascimento',wikiOpen:'↗ Wikipedia',
+  },
+  it:{
+    title:'Tracker della vita mondiale',sub:'Scopri il mondo com\'era alla tua nascita',
+    dob:'Data di nascita',city:'Città',explore:'Esplora la mia vita',loading:'Caricamento dati',
+    daysLived:'Giorni vissuti',heartbeats:'Battiti cardiaci',orbits:'Orbite terrestri',
+    breathsTaken:'Respiri',sleepHours:'Ore di sonno',blinks:'Battiti di ciglia',
+    lifeProgress:'Progresso di vita',avgBpm:'~70 bpm in media',aroundSun:'intorno al Sole',
+    weatherBirth:'Meteo alla nascita',maxTemp:'Temperatura massima il',
+    hottest:'Uno dei giorni più caldi dell\'anno',coldest:'Uno dei giorni più freddi dell\'anno',
+    warmer:'Più caldo della media annuale',colder:'Più freddo della media annuale',typical:'Temperatura tipica dell\'anno',
+    yourPlace:'Il tuo posto nel mondo',
+    pricesTitle:'Prezzi storici del tuo anno di nascita',pricesBread:'Pane (filone)',pricesGas:'Benzina (litro)',pricesGold:'Oro (oncia troy)',pricesNow:'Oggi',
+    musicTitle:'Canzoni popolari del tuo anno',filmTitle:'Film popolari del tuo anno',chart:'Classifica',
+    zodiac:'Zodiaco occidentale',chinese:'Zodiaco cinese',lifeNum:'Numero del percorso di vita',planetAge:'La tua età sugli altri pianeti',
+    famousBirthday:'Personaggi famosi con il tuo compleanno',famousCity:'Personalità da',clickWiki:'Clicca su una scheda per aprire Wikipedia',
+    eventsTitle:'Tutti gli eventi importanti il',eventsCount:'eventi registrati nella tua data',showAll:'Mostra tutto',events:'eventi ↓',
+    timelineTitle:'La tua cronologia di vita',global:'Globale',regional:'Regionale',
+    shareTitle:'Condividi la tua scheda di vita',shareCopy:'Copia link',shareCopied:'Copiato!',
+    shareText:'Ho vissuto {days} giorni, il mio cuore ha battuto {hb} volte e ho fatto {orbits} giri intorno al Sole 🌍',
+    printPdf:'Stampa / PDF',kofi:'Offrimi un caffè ☕',
+    population:'Popolazione mondiale alla nascita',popNow:'Popolazione oggi',popBorn:'Persone nate dopo di te',
+    btcTitle:'Bitcoin e la Tua Vita',btcYearsBefore:'anni prima di Bitcoin',btcYearsAfter:'Bitcoin è apparso',btcAgeAtLaunch:'La tua età al lancio di Bitcoin',btcIf1:'Se avessi comprato 1 BTC al lancio',btcLaunchPrice:'Prezzo Bitcoin al lancio (2009)',btcNowPrice:'Prezzo Bitcoin oggi (~2025)',btcProfit:'Profitto se vendessi oggi',btcYearsLabel:'anni dopo la tua nascita',wikiOpen:'↗ Wikipedia',
+  }
+};
+let lang = 'en';
+function t(k){ return (T[lang]||T.en)[k] || T.en[k] || k; }
+function setLang(l){
+  lang = l;
+  document.getElementById('hdr-title').textContent = t('title');
+  document.getElementById('hdr-sub').textContent   = t('sub');
+  document.getElementById('lbl-dob').textContent   = t('dob');
+  document.getElementById('lbl-city').textContent  = t('city');
+  document.getElementById('go-btn').textContent    = t('explore');
+  document.querySelector('#city-input').placeholder = t('city')+'…';
+  document.documentElement.lang = l;
+}
+
+/* ══ THEME ══ */
+let currentTheme = window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+(function(){
+  document.documentElement.setAttribute('data-theme',currentTheme);
+  if(currentTheme==='dark'){document.getElementById('theme-icon').textContent='☀️';document.getElementById('theme-label').textContent='Light mode';}
+})();
+function toggleTheme(){
+  currentTheme=currentTheme==='light'?'dark':'light';
+  document.documentElement.setAttribute('data-theme',currentTheme);
+  document.getElementById('theme-icon').textContent=currentTheme==='dark'?'☀️':'🌙';
+  document.getElementById('theme-label').textContent=currentTheme==='dark'?'Light mode':'Dark mode';
+}
+
+/* ══ CITY AUTOCOMPLETE ══ */
+let selectedCity=null,suggTimeout=null;
+document.getElementById('city-input').addEventListener('input',function(){
+  clearTimeout(suggTimeout);
+  const q=this.value.trim();
+  if(q.length<2){document.getElementById('city-suggestions').innerHTML='';return;}
+  suggTimeout=setTimeout(()=>fetchCities(q),300);
+});
+async function fetchCities(q){
+  try{
+    const r=await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=7&lang=en`);
+    const d=await r.json();
+    const box=document.getElementById('city-suggestions');
+    const items=d.features.filter(f=>['city','town','village','locality','municipality'].includes(f.properties.type));
+    if(!items.length){box.innerHTML='';return;}
+    box.innerHTML=items.map((f,i)=>{
+      const p=f.properties;
+      const sub=[p.state,p.country].filter(Boolean).join(', ');
+      return `<div class="sugg-item" onclick="selectCity(${i})">${p.name}<span class="sugg-country">${sub}</span></div>`;
+    }).join('');
+    box._items=items;
+  }catch(e){}
+}
+function selectCity(i){
+  const box=document.getElementById('city-suggestions');
+  const f=box._items[i],p=f.properties;
+  selectedCity={name:p.name,country:p.country||'',countryCode:(p.countrycode||'').toLowerCase(),lat:f.geometry.coordinates[1],lon:f.geometry.coordinates[0],displayName:[p.name,p.state,p.country].filter(Boolean).join(', ')};
+  document.getElementById('city-input').value=selectedCity.displayName;
+  box.innerHTML='';
+}
+document.addEventListener('click',e=>{if(!e.target.closest('.autocomplete-wrap'))document.getElementById('city-suggestions').innerHTML='';});
+
+/* ══ MAIN TRACKER ══ */
+async function runTracker(){
+  const dobVal=document.getElementById('dob').value;
+  if(!dobVal){alert(t('dob')+' required');return;}
+  if(!selectedCity){alert(t('city')+' required');return;}
+  const btn=document.getElementById('go-btn');
+  btn.disabled=true;btn.textContent=t('loading')+'…';
+  document.getElementById('results-area').innerHTML=`<div class="loading-state">${t('loading')}<span class="ld"></span><span class="ld"></span><span class="ld"></span></div>`;
+  try{
+    const birth=new Date(dobVal+'T12:00:00');
+    const year=birth.getFullYear();
+    const today=new Date();
+    const daysLived=Math.floor((today-birth)/86400000);
+    const secondsLived=Math.floor((today-birth)/1000);
+    const heartbeats=Math.round(secondsLived*70/60);
+    const orbits=(daysLived/365.25).toFixed(2);
+    const breaths=Math.round(secondsLived*16/60);
+    const sleepHrs=Math.round(daysLived*8);
+    const blinks=Math.round(secondsLived*0.28);
+    // Life expectancy by country (WHO 2023 data)
+    const leByCountry={
+      us:79,gb:81,de:81,fr:83,it:83,es:84,pt:82,nl:82,be:82,ch:84,at:82,se:83,no:83,dk:81,fi:82,
+      jp:84,kr:83,au:83,nz:82,ca:82,sg:84,hk:85,il:83,
+      cn:78,th:77,my:76,br:76,mx:75,ar:77,cl:80,co:77,pe:77,
+      ru:73,ua:73,pl:78,cz:79,hu:76,ro:76,bg:75,hr:78,sk:77,si:81,
+      tr:78,sa:76,ae:78,ir:77,eg:72,za:65,ng:55,ke:67,gh:64,
+      in:70,pk:68,bd:73,id:72,ph:71,vn:75,ph:71,
+    };
+    const lifeExpectancy = leByCountry[selectedCity.countryCode] || 78;
+    const lifePercent=Math.min(99,(daysLived/(lifeExpectancy*365.25)*100)).toFixed(1);
+
+    const [weatherHTML,wikiEvents,bdCelebs,localPeople,btcLivePrice]=await Promise.all([
+      buildWeather(dobVal,birth,year),
+      fetchAllBirthdayEvents(birth),
+      fetchBirthdayCelebs(birth),
+      fetchLocalCelebs(selectedCity),
+      fetchBtcPrice()
+    ]);
+
+    const statsHTML=buildStats(daysLived,heartbeats,orbits,breaths,sleepHrs,blinks,lifePercent,lifeExpectancy);
+    const astroHTML=buildAstro(birth,year,daysLived);
+    const pricesHTML=buildPrices(year);
+    const btcHTML=buildBitcoin(year,btcLivePrice);
+    const mediaHTML=buildMedia(year);
+    const popHTML=buildPopulation(year,daysLived);
+    const mapHTML=buildMap();
+    const shareHTML=buildShare(daysLived,heartbeats,orbits);
+    const wikiHTML=buildWikiHTML(wikiEvents,birth);
+    const bdCelebHTML=buildBdCelebsHTML(bdCelebs,birth);
+    const localHTML=buildLocalHTML(localPeople);
+    const timelineHTML=buildTimeline(year,selectedCity.countryCode,selectedCity.country);
+
+    document.getElementById('results-area').innerHTML=`
+      <div class="results" id="life-card">
+        ${shareHTML}
+        ${statsHTML}
+        <div class="divider"></div>
+        ${astroHTML}
+        <div class="divider"></div>
+        ${pricesHTML}
+        ${btcHTML}
+        ${mediaHTML}
+        <div class="divider"></div>
+        ${weatherHTML}
+        ${popHTML}
+        ${mapHTML}
+        <div class="divider"></div>
+        ${bdCelebHTML}
+        ${localHTML}
+        <div class="divider"></div>
+        ${wikiHTML}
+        ${timelineHTML}
+        <div class="divider no-print"></div>
+        <div class="no-print" style="text-align:center;padding-bottom:8px">
+          <ins class="adsbygoogle" style="display:block;min-height:0" data-ad-client="ca-pub-8902130785981866" data-ad-slot="0987654321" data-ad-format="auto" data-full-width-responsive="true"></ins>
+          <script>(adsbygoogle=window.adsbygoogle||[]).push({})<\/script>
+        </div>
+      </div>`;
+
+    startLiveCounters(birth,breaths,blinks);
+    animateProgressBar(lifePercent);
+  }catch(err){
+    document.getElementById('results-area').innerHTML=`<div class="results"><div class="err-box">Error: ${err.message}</div></div>`;
+  }
+  btn.disabled=false;btn.textContent=t('explore');
+}
+
+/* ── Stats ── */
+function buildStats(days,hb,orbits,breaths,sleepHrs,blinks,lifePercent,lifeExp){
+  const yrs=Math.floor(days/365),mos=Math.floor((days%365)/30);
+  return `
+    <div style="margin-bottom:0">
+      <p class="sec-lbl">${t('daysLived').toUpperCase()} & MORE</p>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-lbl">${t('daysLived')}</div><div class="stat-val" id="days-counter">${days.toLocaleString()}</div><div class="stat-sub">${yrs} yrs ${mos} mo</div></div>
+        <div class="stat-card"><div class="stat-icon">❤️</div><div class="stat-lbl">${t('heartbeats')}</div><div class="stat-val" id="hb-counter">${hb.toLocaleString()}</div><div class="stat-sub">${t('avgBpm')}</div></div>
+        <div class="stat-card"><div class="stat-icon">🌍</div><div class="stat-lbl">${t('orbits')}</div><div class="stat-val">${orbits}</div><div class="stat-sub">${t('aroundSun')}</div></div>
+      </div>
+      <div class="extra-stats-grid">
+        <div class="stat-card"><div class="stat-icon">🫁</div><div class="stat-lbl">${t('breathsTaken')}</div><div class="stat-val" id="br-counter">${breaths.toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-icon">😴</div><div class="stat-lbl">${t('sleepHours')}</div><div class="stat-val">${sleepHrs.toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-icon">👁️</div><div class="stat-lbl">${t('blinks')}</div><div class="stat-val" id="bl-counter">${blinks.toLocaleString()}</div></div>
+        <div class="stat-card"><div class="stat-icon">⏳</div><div class="stat-lbl">${t('lifeProgress')}</div><div class="stat-val">${lifePercent}%</div><div class="progress-bar-wrap"><div class="progress-bar-fill" id="life-bar" style="width:0%"></div></div><div class="stat-sub">of ~${lifeExp} yr avg (WHO)</div></div>
+      </div>
+    </div>`;
+}
+
+/* ── Astrology / Planets ── */
+function buildAstro(birth,year,days){
+  const westernZodiac=[
+    {s:'Capricorn',e:'Козерог',emoji:'♑'},{s:'Aquarius',e:'Водолей',emoji:'♒'},
+    {s:'Pisces',e:'Рыбы',emoji:'♓'},{s:'Aries',e:'Овен',emoji:'♈'},
+    {s:'Taurus',e:'Телец',emoji:'♉'},{s:'Gemini',e:'Близнецы',emoji:'♊'},
+    {s:'Cancer',e:'Рак',emoji:'♋'},{s:'Leo',e:'Лев',emoji:'♌'},
+    {s:'Virgo',e:'Дева',emoji:'♍'},{s:'Libra',e:'Весы',emoji:'♎'},
+    {s:'Scorpio',e:'Скорпион',emoji:'♏'},{s:'Sagittarius',e:'Стрелец',emoji:'♐'}
+  ];
+  const zodiacDates=[[20,1],[19,2],[20,3],[20,4],[21,5],[21,6],[22,7],[22,8],[23,9],[23,10],[22,11],[22,12]];
+  const m=birth.getMonth(),d=birth.getDate();
+  const idx=zodiacDates.findIndex((z,i)=>m===i&&d>=z[0]||m===((i+1)%12)&&d<zodiacDates[(i+1)%12][0]);
+  const zIdx=(m>0||d>=20)?m:(11);
+  const z=westernZodiac[zIdx>-1?zIdx:m]||westernZodiac[m];
+
+  const chineseAnimals=['Rat','Ox','Tiger','Rabbit','Dragon','Snake','Horse','Goat','Monkey','Rooster','Dog','Pig'];
+  const chineseEmojis=['🐀','🐂','🐯','🐰','🐉','🐍','🐴','🐐','🐒','🐓','🐕','🐷'];
+  const chIdx=((year-1900)%12+12)%12;
+
+  const lifePathDigits=(birth.getFullYear().toString()+String(birth.getMonth()+1).padStart(2,'0')+String(birth.getDate()).padStart(2,'0')).split('').map(Number).reduce((a,b)=>a+b,0);
+  let lpn=lifePathDigits;
+  while(lpn>9&&lpn!==11&&lpn!==22&&lpn!==33)lpn=lpn.toString().split('').map(Number).reduce((a,b)=>a+b,0);
+
+  const planets=[
+    {n:'Mercury',emoji:'☿',yr:0.241},{n:'Venus',emoji:'♀',yr:0.615},
+    {n:'Mars',emoji:'♂',yr:1.881},{n:'Jupiter',emoji:'♃',yr:11.86},
+    {n:'Saturn',emoji:'♄',yr:29.46},{n:'Uranus',emoji:'⛢',yr:84.01},
+  ];
+
+  return `
+    <div class="astro-section">
+      <p class="sec-lbl">${t('zodiac')} · ${t('chinese')} · ${t('lifeNum')} · ${t('planetAge')}</p>
+      <div class="astro-grid">
+        <div class="astro-card"><div class="astro-emoji">${z?z.emoji:'⭐'}</div><div class="astro-lbl">${t('zodiac')}</div><div class="astro-val">${z?z.s:'—'}</div></div>
+        <div class="astro-card"><div class="astro-emoji">${chineseEmojis[chIdx]}</div><div class="astro-lbl">${t('chinese')}</div><div class="astro-val">${chineseAnimals[chIdx]}</div></div>
+        <div class="astro-card"><div class="astro-emoji">🔢</div><div class="astro-lbl">${t('lifeNum')}</div><div class="astro-val">${lpn}</div></div>
+        ${planets.map(p=>`<div class="astro-card"><div class="astro-emoji">${p.emoji}</div><div class="astro-lbl">${p.n}</div><div class="astro-val">${(days/365.25/p.yr).toFixed(1)}</div><div class="astro-sub">yrs</div></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Historical Prices ── */
+function buildPrices(year){
+  // Approximate historical prices by decade for 8 currencies
+  function getPrices(y){
+    const decade=Math.floor(y/10)*10;
+    const data={
+      usd:{flag:'🇺🇸',name:'US Dollar (USD)',bread:{1920:.10,1930:.08,1940:.09,1950:.14,1960:.20,1970:.25,1980:.50,1990:.70,2000:1.0,2010:1.4,2020:2.5},gas:{1920:.26,1930:.19,1940:.18,1950:.27,1960:.31,1970:.36,1980:1.19,1990:1.1,2000:1.5,2010:2.7,2020:2.2},gold:{1920:20,1930:20,1940:34,1950:35,1960:35,1970:36,1980:200,1990:400,2000:280,2010:1200,2020:1800},goldNow:2300,breadNow:3.5,gasNow:3.5},
+      eur:{flag:'🇪🇺',name:'Euro (EUR)',bread:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:null,2000:.8,2010:1.1,2020:1.5},gas:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:null,2000:.85,2010:1.4,2020:1.3},gold:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:null,2000:280,2010:900,2020:1500},goldNow:2100,breadNow:2.5,gasNow:1.7},
+      gbp:{flag:'🇬🇧',name:'Pound Sterling (GBP)',bread:{1920:.04,1930:.03,1940:.04,1950:.04,1960:.06,1970:.09,1980:.35,1990:.55,2000:.75,2010:.95,2020:1.1},gas:{1920:.05,1930:.04,1940:.04,1950:.05,1960:.06,1970:.07,1980:.5,1990:.6,2000:.7,2010:1.2,2020:1.1},gold:{1920:4,1930:4,1940:7,1950:12,1960:12,1970:14,1980:80,1990:180,2000:180,2010:800,2020:1400},goldNow:1800,breadNow:1.2,gasNow:1.65},
+      jpy:{flag:'🇯🇵',name:'Japanese Yen (JPY)',bread:{1920:5,1930:4,1940:5,1950:20,1960:30,1970:60,1980:120,1990:180,2000:200,2010:200,2020:200},gas:{1920:null,1930:null,1940:null,1950:30,1960:40,1970:55,1980:130,1990:120,2000:110,2010:140,2020:130},gold:{1920:null,1930:null,1940:null,1950:3000,1960:3000,1970:3600,1980:50000,1990:50000,2000:30000,2010:100000,2020:190000},goldNow:350000,breadNow:200,gasNow:170},
+      cny:{flag:'🇨🇳',name:'Chinese Yuan (CNY)',bread:{1920:null,1930:null,1940:null,1950:.1,1960:.1,1970:.1,1980:.15,1990:.5,2000:1.5,2010:3.5,2020:5},gas:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:.5,2000:2.0,2010:5.5,2020:6.0},gold:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:800,2000:2000,2010:8000,2020:12000},goldNow:15000,breadNow:6,gasNow:8},
+      rub:{flag:'🇷🇺',name:'Russian Ruble (RUB)',bread:{1920:null,1930:null,1940:null,1950:.12,1960:.12,1970:.13,1980:.14,1990:.5,2000:6,2010:25,2020:45},gas:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:.09,1980:.10,1990:.35,2000:7,2010:25,2020:45},gold:{1920:null,1930:null,1940:null,1950:null,1960:null,1970:null,1980:null,1990:null,2000:8000,2010:40000,2020:120000},goldNow:210000,breadNow:50,gasNow:55},
+      thb:{flag:'🇹🇭',name:'Thai Baht (THB)',bread:{1920:null,1930:null,1940:null,1950:1,1960:1.5,1970:2,1980:5,1990:8,2000:15,2010:25,2020:35},gas:{1920:null,1930:null,1940:null,1950:2,1960:3,1970:4,1980:8,1990:9,2000:16,2010:35,2020:28},gold:{1920:null,1930:null,1940:null,1950:null,1960:500,1970:700,1980:5000,1990:7000,2000:9000,2010:25000,2020:60000},goldNow:85000,breadNow:40,gasNow:42},
+    };
+    const dec=Math.min(2020,Math.max(1920,decade));
+    const results={};
+    for(const [k,v] of Object.entries(data)){
+      const bread=v.bread[dec],gas=v.gas[dec],gold=v.gold[dec];
+      results[k]={flag:v.flag,name:v.name,bread,gas,gold,breadNow:v.breadNow,gasNow:v.gasNow,goldNow:v.goldNow};
+    }
+    return results;
+  }
+  const prices=getPrices(year);
+  const fmt=(n,decimals=0)=>n!=null?n.toLocaleString(undefined,{maximumFractionDigits:decimals}):'N/A';
+  const cards=Object.values(prices).map(p=>`
+    <div class="price-card">
+      <div class="price-flag">${p.flag}</div>
+      <div class="price-currency">${p.name}</div>
+      <div class="price-row"><span class="price-label">🍞 ${t('pricesBread')}</span><span class="price-val">${fmt(p.bread,2)} <span class="price-arrow">→ ${fmt(p.breadNow,2)}</span></span></div>
+      <div class="price-row"><span class="price-label">⛽ ${t('pricesGas')}</span><span class="price-val">${fmt(p.gas,2)} <span class="price-arrow">→ ${fmt(p.gasNow,2)}</span></span></div>
+      <div class="price-row"><span class="price-label">🥇 ${t('pricesGold')}</span><span class="price-val">${fmt(p.gold)} <span class="price-arrow">→ ${fmt(p.goldNow)}</span></span></div>
+    </div>`).join('');
+  return `
+    <div class="prices-section">
+      <p class="sec-lbl">${t('pricesTitle')} (${year})</p>
+      <div class="prices-grid">${cards}</div>
+    </div>`;
+}
+
+/* ── Bitcoin Block ── */
+async function fetchBtcPrice(){
+  try{
+    // CoinGecko free API — no key needed
+    const r = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const d = await r.json();
+    return d?.bitcoin?.usd || null;
+  }catch(e){
+    // Fallback: try alternative free endpoint
+    try{
+      const r2 = await fetch('https://api.coinbase.com/v2/prices/BTC-USD/spot');
+      const d2 = await r2.json();
+      return parseFloat(d2?.data?.amount) || null;
+    }catch(e2){ return null; }
+  }
+}
+
+function buildBitcoin(year, btcLivePrice){
+  const btcLaunchYear = 2009;
+  const btcLaunchPrice = 0.001;
+  const nowYear = new Date().getFullYear();
+  const btcNowPrice = btcLivePrice || 95000; // live price or fallback
+  const yearsFromBirth = btcLaunchYear - year;
+  const ageAtLaunch = yearsFromBirth > 0 ? yearsFromBirth : null;
+  const profit = (btcNowPrice - btcLaunchPrice).toLocaleString('en-US', {maximumFractionDigits:0});
+  const multiplier = Math.round(btcNowPrice / btcLaunchPrice).toLocaleString();
+  const priceFormatted = btcNowPrice.toLocaleString('en-US', {maximumFractionDigits:0});
+  const isLive = !!btcLivePrice;
+  const yearsSince = nowYear - btcLaunchYear;
+
+  let birthRelation = '';
+  if(yearsFromBirth > 0){
+    birthRelation = `Bitcoin launched ${yearsFromBirth} ${t('btcYearsLabel')}`;
+  } else if(yearsFromBirth === 0){
+    birthRelation = `Bitcoin launched the same year you were born`;
+  } else {
+    birthRelation = `You were born ${Math.abs(yearsFromBirth)} years after Bitcoin launched`;
+  }
+
+  return `
+    <div class="btc-section">
+      <p class="sec-lbl">₿ ${t('btcTitle')}</p>
+      <div class="btc-card">
+        <div class="btc-header">
+          <div class="btc-logo">₿</div>
+          <div>
+            <div class="btc-title">${t('btcTitle')}</div>
+            <div class="btc-sub">${birthRelation}</div>
+          </div>
+        </div>
+        <div class="btc-stats">
+          ${ageAtLaunch !== null ? `<div class="btc-stat"><div class="btc-stat-lbl">${t('btcAgeAtLaunch')}</div><div class="btc-stat-val">${ageAtLaunch}</div><div class="btc-stat-sub">years old in 2009</div></div>` : ''}
+          <div class="btc-stat"><div class="btc-stat-lbl">${t('btcLaunchPrice')}</div><div class="btc-stat-val">~$0.001</div><div class="btc-stat-sub">per BTC (Jan 2009)</div></div>
+          <div class="btc-stat">
+            <div class="btc-stat-lbl">${t('btcNowPrice')}</div>
+            <div class="btc-stat-val">$${priceFormatted}</div>
+            <div class="btc-stat-sub">${isLive ? '🟢 Live price' : '⚪ Estimated'} · ${nowYear}</div>
+          </div>
+          <div class="btc-stat"><div class="btc-stat-lbl">Years since Bitcoin</div><div class="btc-stat-val">${yearsSince}</div><div class="btc-stat-sub">years of existence</div></div>
+        </div>
+        <div class="btc-highlight">
+          <div class="btc-hl-label">💰 ${t('btcIf1')} (1 BTC for ~$0.001 in 2009)</div>
+          <div class="btc-hl-val">+$${profit}</div>
+          <div class="btc-hl-sub">${t('btcProfit')} · ~${multiplier}x return</div>
+        </div>
+      </div>
+    </div>`;
+}
+function buildMedia(year){
+  const musicDb={
+    1950:['Goodnight Irene – Leadbelly','Tennessee Waltz – Patti Page','Mona Lisa – Nat King Cole'],
+    1955:['Rock Around the Clock – Bill Haley','Sixteen Tons – Tennessee Ernie Ford','Ain\'t That a Shame – Fats Domino'],
+    1960:['It\'s Now or Never – Elvis Presley','Are You Lonesome – Elvis','Running Scared – Roy Orbison'],
+    1965:['(I Can\'t Get No) Satisfaction – The Rolling Stones','Like a Rolling Stone – Bob Dylan','Help! – The Beatles'],
+    1970:['Bridge Over Troubled Water – Simon & Garfunkel','Let It Be – The Beatles','In the Summertime – Mungo Jerry'],
+    1975:['Bohemian Rhapsody – Queen','Fame – David Bowie','Dancing Queen – ABBA'],
+    1980:['Another One Bites the Dust – Queen','Call Me – Blondie','Lady – Kenny Rogers'],
+    1985:['We Are the World – USA for Africa','Careless Whisper – George Michael','Like a Virgin – Madonna'],
+    1990:['Nothing Compares 2 U – Sinéad O\'Connor','Vogue – Madonna','Blinding Lights – The Weeknd'],
+    1995:['Gangsta\'s Paradise – Coolio','Waterfalls – TLC','Creep – Radiohead'],
+    2000:['How You Remind Me – Nickelback','Hanging by a Moment – Lifehouse','California Dreamin\' – Mamas & Papas'],
+    2005:['Hollaback Girl – Gwen Stefani','Since U Been Gone – Kelly Clarkson','Feel Good Inc – Gorillaz'],
+    2010:['Tik Tok – Kesha','Need You Now – Lady Antebellum','Alejandro – Lady Gaga'],
+    2015:['Hello – Adele','Shape of You – Ed Sheeran','Uptown Funk – Bruno Mars'],
+    2020:['Blinding Lights – The Weeknd','Dynamite – BTS','drivers license – Olivia Rodrigo'],
+  };
+  const filmDb={
+    1950:['All About Eve','Sunset Boulevard','Rashomon'],
+    1955:['Rebel Without a Cause','Marty','The Night of the Hunter'],
+    1960:['Psycho','Spartacus','The Apartment'],
+    1965:['The Sound of Music','Doctor Zhivago','For a Few Dollars More'],
+    1970:['Patton','MASH','The Conformist'],
+    1975:['Jaws','One Flew Over the Cuckoo\'s Nest','Barry Lyndon'],
+    1980:['Star Wars: Empire Strikes Back','Raging Bull','The Shining'],
+    1985:['Back to the Future','The Color Purple','Witness'],
+    1990:['Goodfellas','Home Alone','Dances with Wolves'],
+    1995:['Toy Story','Se7en','Braveheart'],
+    2000:['Gladiator','Memento','Cast Away'],
+    2005:['Batman Begins','Brokeback Mountain','Munich'],
+    2010:['Inception','The Social Network','Toy Story 3'],
+    2015:['Mad Max: Fury Road','The Revenant','Spotlight'],
+    2020:['Parasite','Tenet','Soul'],
+  };
+  function closestYear(db,y){const keys=Object.keys(db).map(Number).sort((a,b)=>a-b);return keys.reduce((a,b)=>Math.abs(b-y)<Math.abs(a-y)?b:a);}
+  const mYear=closestYear(musicDb,year);
+  const fYear=closestYear(filmDb,year);
+  const songs=musicDb[mYear];
+  const films=filmDb[fYear];
+  return `
+    <div class="media-section">
+      <div class="media-grid">
+        <div class="media-card">
+          <div class="media-top"><div class="media-icon">🎵</div><div class="media-title">${t('musicTitle')}</div></div>
+          ${songs.map((s,i)=>`<div class="media-item"><div class="media-rank">#${i+1}</div><div class="media-name">${s.split('–')[0]?.trim()||s}</div><div class="media-sub">${s.split('–')[1]?.trim()||''}</div></div>`).join('')}
+        </div>
+        <div class="media-card">
+          <div class="media-top"><div class="media-icon">🎬</div><div class="media-title">${t('filmTitle')}</div></div>
+          ${films.map((f,i)=>`<div class="media-item"><div class="media-rank">#${i+1}</div><div class="media-name">${f}</div></div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ── Population ── */
+function buildPopulation(year,daysLived){
+  const popByYear={1920:1.86,1930:2.07,1940:2.30,1950:2.54,1955:2.77,1960:3.03,1965:3.34,1970:3.70,1975:4.07,1980:4.43,1985:4.83,1990:5.33,1995:5.72,2000:6.09,2005:6.51,2010:6.90,2015:7.38,2020:7.79,2025:8.1};
+  const keys=Object.keys(popByYear).map(Number).sort((a,b)=>a-b);
+  const closest=keys.reduce((a,b)=>Math.abs(b-year)<Math.abs(a-year)?b:a);
+  const popAtBirth=popByYear[closest];
+  const popNow=8.1;
+  const bornAfter=((popNow-popAtBirth)*1e9/100*daysLived).toFixed(0);
+  return `
+    <div style="margin-bottom:28px">
+      <p class="sec-lbl">${t('population')}</p>
+      <div class="stats-grid" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="stat-card"><div class="stat-icon">🌐</div><div class="stat-lbl">${t('population')}</div><div class="stat-val">${popAtBirth}B</div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-lbl">${t('popNow')}</div><div class="stat-val">${popNow}B</div></div>
+        <div class="stat-card"><div class="stat-icon">👶</div><div class="stat-lbl">${t('popBorn')}</div><div class="stat-val">~${(((popNow-popAtBirth)*1000)).toFixed(0)}M</div></div>
+      </div>
+    </div>`;
+}
+
+/* ── Weather ── */
+async function buildWeather(dobVal,birth,year){
+  try{
+    const{lat,lon}=selectedCity;
+    const curYear=new Date().getFullYear();
+    const[wDay,wYear]=await Promise.all([
+      fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${dobVal}&end_date=${dobVal}&daily=temperature_2m_max,temperature_2m_min&timezone=auto`).then(r=>r.json()),
+      fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${lat}&longitude=${lon}&start_date=${year}-01-01&end_date=${year<curYear?year+'-12-31':dobVal}&daily=temperature_2m_max&timezone=auto`).then(r=>r.json())
+    ]);
+    const dayTemp=wDay.daily?.temperature_2m_max?.[0]??null;
+    let bc='badge-mild',bt=t('typical');
+    if(dayTemp!==null&&wYear.daily?.temperature_2m_max){
+      const temps=wYear.daily.temperature_2m_max.filter(x=>x!==null);
+      const maxT=Math.max(...temps),minT=Math.min(...temps),avgT=temps.reduce((a,b)=>a+b,0)/temps.length;
+      if(Math.abs(dayTemp-maxT)<1.5){bc='badge-hot';bt=t('hottest');}
+      else if(Math.abs(dayTemp-minT)<1.5){bc='badge-cold';bt=t('coldest');}
+      else if(dayTemp>avgT+5){bc='badge-hot';bt=t('warmer');}
+      else if(dayTemp<avgT-5){bc='badge-cold';bt=t('colder');}
+    }
+    const dT=dayTemp!==null?`${Math.round(dayTemp)}°C`:'N/A';
+    const dateStr=birth.toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+    return `
+      <div style="margin-bottom:28px">
+        <p class="sec-lbl">${t('weatherBirth')}</p>
+        <div class="weather-card">
+          <div class="weather-temp">${dT}</div>
+          <div class="weather-meta">
+            <div class="weather-date">${t('maxTemp')} ${dateStr}</div>
+            <div class="weather-city">${selectedCity.displayName}</div>
+            <span class="badge ${bc}">${bt}</span>
+          </div>
+        </div>
+      </div>`;
+  }catch(e){return `<div class="err-box">Weather data unavailable</div>`;}
+}
+
+/* ── Map ── */
+function buildMap(){
+  const{lat,lon,displayName}=selectedCity;
+  return `
+    <div class="map-section">
+      <p class="sec-lbl">${t('yourPlace')}</p>
+      <div class="map-wrap">
+        <iframe src="https://www.openstreetmap.org/export/embed.html?bbox=${lon-1},${lat-0.7},${lon+1},${lat+0.7}&layer=mapnik&marker=${lat},${lon}" allowfullscreen title="Map of ${displayName}"></iframe>
+      </div>
+    </div>`;
+}
+
+/* ── Share ── */
+function buildShare(days,hb,orbits){
+  const msg=t('shareText').replace('{days}',days.toLocaleString()).replace('{hb}',hb.toLocaleString()).replace('{orbits}',orbits);
+  const url=encodeURIComponent(location.href);
+  const enc=encodeURIComponent(msg+' '+location.href);
+  return `
+    <div class="share-section no-print">
+      <p class="sec-lbl">${t('shareTitle')}</p>
+      <div class="share-grid">
+        <a class="share-btn share-x" href="https://twitter.com/intent/tweet?text=${enc}" target="_blank" rel="noopener">𝕏 Twitter</a>
+        <a class="share-btn share-wa" href="https://wa.me/?text=${enc}" target="_blank" rel="noopener">💬 WhatsApp</a>
+        <a class="share-btn share-tg" href="https://t.me/share/url?url=${url}&text=${encodeURIComponent(msg)}" target="_blank" rel="noopener">✈️ Telegram</a>
+        <button class="share-btn share-copy" onclick="copyLink(this)">${t('shareCopy')}</button>
+        <button class="act-btn primary" onclick="window.print()">🖨️ ${t('printPdf')}</button>
+        <a class="act-btn kofi-btn" href="https://ko-fi.com/YOUR_KOFI_ID" target="_blank" rel="noopener">${t('kofi')}</a>
+      </div>
+    </div>`;
+}
+function copyLink(btn){
+  navigator.clipboard.writeText(location.href).then(()=>{btn.textContent=t('shareCopied');setTimeout(()=>btn.textContent=t('shareCopy'),2000);});
+}
+
+/* ── Wikipedia events ── */
+async function fetchAllBirthdayEvents(birth){
+  const mm=String(birth.getMonth()+1).padStart(2,'0');
+  const dd=String(birth.getDate()).padStart(2,'0');
+  try{const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());return(d.events||[]).sort((a,b)=>a.year-b.year);}catch(e){return[];}
+}
+function buildWikiHTML(events,birth){
+  if(!events.length)return'';
+  // Filter to only the most important events: prefer ones with multiple Wikipedia page references
+  const important = events
+    .filter(ev => ev.pages && ev.pages.length > 0)
+    .sort((a,b) => (b.pages?.length||0) - (a.pages?.length||0))
+    .slice(0, 12);
+  // Fall back to first 12 if no pages metadata
+  const display = important.length >= 4 ? important : events.slice(0, 12);
+  const sorted = [...display].sort((a,b) => a.year - b.year);
+  const dateStr=birth.toLocaleDateString('en-GB',{month:'long',day:'numeric'});
+  return `
+    <div class="wiki-section">
+      <p class="sec-lbl">${t('eventsTitle')} ${dateStr}</p>
+      ${sorted.map(ev=>`<div class="wiki-item"><div class="wiki-year">${ev.year}</div><div class="wiki-text">${ev.text}</div></div>`).join('')}
+      <p class="info-note">${events.length} ${t('eventsCount')}</p>
+    </div>`;
+}
+
+/* ── Famous people – same birthday ── */
+const TIER1=/president of the united states|prime minister of (the )?uk|general secretary|emperor of|king of|queen of|pope|pharaoh|nobel (peace |prize |laureate)|world heavyweight|formula one world champion|fifa world (cup|player)|olympic gold|grammy award|oscar.winning|academy award|pulitzer|fields medal|turing award/i;
+const TIER2=/american (actor|actress|singer|rapper|musician|director|filmmaker|comedian|athlete|footballer|basketball|tennis|swimmer|boxer|golfer|sprinter|gymnast|cyclist|cricketer|olympian)|british (actor|actress|singer|musician|director)|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|philosopher|physicist|mathematician|inventor|astronaut|novelist|poet|painter|sculptor|composer|conductor|politician|statesman|dictator|monarch|chancellor|senator|activist|saint|explorer/i;
+const TIER3=/actor|actress|singer|musician|composer|rapper|filmmaker|director|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|entrepreneur|founder|scientist|biologist|chemist|astronomer|geographer|historian|journalist|comedian/i;
+
+function notabilityScore(p,full){
+  if(!p)return 0;
+  let s=0;
+  const desc=(p.description||'').toLowerCase(),extract=(full?.extract||'').toLowerCase(),c=desc+' '+extract;
+  if(p.thumbnail?.source)s+=50;
+  if(TIER1.test(c))s+=120;else if(TIER2.test(c))s+=60;else if(TIER3.test(c))s+=20;else s-=40;
+  s+=Math.min((full?.extract||'').length/15,60);
+  if(desc.includes('minor')||desc.includes('local'))s-=30;
+  return s;
+}
+async function fetchBirthdayCelebs(birth){
+  const mm=String(birth.getMonth()+1).padStart(2,'0');
+  const dd=String(birth.getDate()).padStart(2,'0');
+  try{
+    const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/${mm}/${dd}`).then(r=>r.json());
+    const births=(d.births||[]).filter(b=>b.pages?.length&&b.pages[0].description);
+    const candidates=births.sort((a,b)=>(b.pages[0].thumbnail?1:0)-(a.pages[0].thumbnail?1:0)).slice(0,40);
+    const summaries=await Promise.allSettled(candidates.map(b=>{
+      const slug=b.pages[0].titles?.canonical||b.pages[0].title||'';
+      return slug?fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`).then(r=>r.json()).catch(()=>null):Promise.resolve(null);
+    }));
+    const scored=candidates.map((b,i)=>{
+      const full=summaries[i].status==='fulfilled'?summaries[i].value:null;
+      if(full?.thumbnail&&!b.pages[0].thumbnail)b.pages[0].thumbnail=full.thumbnail;
+      return{b,score:notabilityScore(b.pages[0],full)};
+    });
+    return scored.sort((a,b)=>b.score-a.score).slice(0,16).map(s=>s.b);
+  }catch(e){return[];}
+}
+function buildBdCelebsHTML(celebs,birth){
+  if(!celebs.length)return'';
+  const dateStr=birth.toLocaleDateString('en-GB',{month:'long',day:'numeric'});
+  const cards=celebs.map((b,i)=>{
+    const p=b.pages[0];
+    const name=p.titles?.normalized||p.normalizedtitle||'Unknown';
+    const desc=(p.description||'').slice(0,70);
+    const wikiSlug=p.titles?.canonical||p.title||'';
+    const wikiUrl=wikiSlug?`https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`:'';
+    const initials=name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    const thumbUrl=p.thumbnail?.source?p.thumbnail.source.replace(/\/\d+px-/,'/120px-'):null;
+    const avInner=thumbUrl?`<img src="${thumbUrl}" alt="${name}" loading="lazy" onerror="this.parentNode.textContent='${initials}';this.parentNode.className='celeb-avatar av${i%6}';"/>`:`${initials}`;
+    const avClass=thumbUrl?'celeb-avatar':`celeb-avatar av${i%6}`;
+    const tag=wikiUrl?'a':'div';
+    const attrs=wikiUrl?`href="${wikiUrl}" target="_blank" rel="noopener"`:'';
+    return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc||'Notable figure'}</div><div class="celeb-born">b. ${b.year}</div>${wikiUrl?`<div class="wiki-hint">${t('wikiOpen')}</div>`:''}</${tag}>`;
+  }).join('');
+  return`<div class="celeb-section"><p class="sec-lbl">${t('famousBirthday')} — ${dateStr}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
+}
+
+/* ── Local celebrities ── */
+async function fetchLocalCelebs(city){
+  try{
+    const r=await fetch(`https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent('notable people born in '+city.name)}&srnamespace=0&srlimit=20&format=json&origin=*`).then(res=>res.json());
+    const results=(r.query?.search||[]).slice(0,12);
+    const summaries=await Promise.allSettled(results.map(item=>fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.title)}`).then(res=>res.json())));
+    return summaries.filter(s=>s.status==='fulfilled'&&s.value?.type==='standard'&&s.value?.description).map(s=>s.value).filter(p=>TIER2.test(p.description||'')||TIER3.test(p.description||'')).slice(0,8);
+  }catch(e){return[];}
+}
+function buildLocalHTML(people){
+  if(!people.length)return'';
+  const cards=people.map((p,i)=>{
+    const name=p.titles?.normalized||p.title||'Unknown';
+    const desc=(p.description||'').slice(0,70);
+    const initials=name.split(' ').map(w=>w[0]||'').join('').slice(0,2).toUpperCase();
+    const thumbUrl=p.thumbnail?.source?p.thumbnail.source.replace(/\/\d+px-/,'/120px-'):null;
+    const avInner=thumbUrl?`<img src="${thumbUrl}" alt="${name}" loading="lazy" onerror="this.parentNode.textContent='${initials}';this.parentNode.className='celeb-avatar av${(i+3)%6}';"/>`:`${initials}`;
+    const avClass=thumbUrl?'celeb-avatar':`celeb-avatar av${(i+3)%6}`;
+    const wikiSlug=p.titles?.canonical||p.title||'';
+    const wikiUrl=wikiSlug?`https://en.wikipedia.org/wiki/${encodeURIComponent(wikiSlug)}`:'';
+    const tag=wikiUrl?'a':'div';
+    const attrs=wikiUrl?`href="${wikiUrl}" target="_blank" rel="noopener"`:'';
+    return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc}</div>${wikiUrl?`<div class="wiki-hint">${t('wikiOpen')}</div>`:''}</${tag}>`;
+  }).join('');
+  return`<div class="celeb-section"><p class="sec-lbl">${t('famousCity')} ${selectedCity.name}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
+}
+
+/* ── Timeline ── */
+function buildTimeline(birthYear,cc,cn){
+  const end=Math.min(birthYear+40,new Date().getFullYear());
+  const all=[...getGlobalEvents(birthYear,end),...getRegionalEvents(birthYear,end,cc)].sort((a,b)=>a.year-b.year);
+  if(!all.length)return'';
+  return`
+    <div class="timeline-section">
+      <p class="sec-lbl">${t('timelineTitle')}</p>
+      <div class="tl-legend">
+        <div class="tl-legend-item"><span class="tl-dot-l" style="background:var(--pd)"></span>${t('global')}</div>
+        <div class="tl-legend-item"><span class="tl-dot-l" style="background:var(--td)"></span>${t('regional')} — ${cn||''}</div>
+      </div>
+      <div class="tl-list">
+        <div class="tl-line"></div>
+        ${all.map(ev=>`<div class="tl-item"><div class="tl-dot ${ev.type==='global'?'dot-g':'dot-r'}"></div><div class="tl-content"><div class="tl-yr">${ev.year}</div><div class="tl-tx">${ev.text}</div><span class="tl-badge ${ev.type==='global'?'tb-g':'tb-r'}">${ev.type==='global'?t('global'):(cn||t('regional'))}</span></div></div>`).join('')}
+      </div>
+    </div>`;
+}
+
+/* ── Live counters ── */
+let _iv=null;
+function startLiveCounters(birth,initBreaths,initBlinks){
+  if(_iv)clearInterval(_iv);
+  _iv=setInterval(()=>{
+    const now=new Date();
+    const days=Math.floor((now-birth)/86400000);
+    const secs=Math.floor((now-birth)/1000);
+    const beats=Math.round(secs*70/60);
+    const breaths=Math.round(secs*16/60);
+    const blinks=Math.round(secs*.28);
+    const dc=document.getElementById('days-counter');
+    const hc=document.getElementById('hb-counter');
+    const bc=document.getElementById('br-counter');
+    const bl=document.getElementById('bl-counter');
+    if(dc)dc.textContent=days.toLocaleString();
+    if(hc)hc.textContent=beats.toLocaleString();
+    if(bc)bc.textContent=breaths.toLocaleString();
+    if(bl)bl.textContent=blinks.toLocaleString();
+  },1000);
+}
+
+function animateProgressBar(pct){
+  setTimeout(()=>{const b=document.getElementById('life-bar');if(b)b.style.width=pct+'%';},300);
+}
+
+/* ══════════════════════════════════════
+   GLOBAL EVENTS DATABASE
+══════════════════════════════════════ */
+function getGlobalEvents(start,end){
+  const db=[
+    {year:1905,text:'Einstein publishes special theory of relativity — physics rewritten'},
+    {year:1912,text:'RMS Titanic sinks — over 1,500 dead'},
+    {year:1914,text:'World War I begins — the Great War reshapes the world'},
+    {year:1917,text:'Russian Revolution — Tsar overthrown, Bolsheviks seize power'},
+    {year:1918,text:'World War I ends — 20 million dead, empires collapse'},
+    {year:1928,text:'Alexander Fleming discovers penicillin — antibiotic era begins'},
+    {year:1929,text:'Wall Street Crash triggers the Great Depression worldwide'},
+    {year:1933,text:'Hitler becomes Chancellor — WWII path begins'},
+    {year:1939,text:'World War II begins — Germany invades Poland'},
+    {year:1941,text:'Japan attacks Pearl Harbor — USA enters WWII'},
+    {year:1944,text:'D-Day — Allied forces land at Normandy'},
+    {year:1945,text:'WWII ends — UN founded; atomic bombs dropped on Japan'},
+    {year:1947,text:'India gains independence from Britain — partition creates Pakistan'},
+    {year:1948,text:'State of Israel declared; Universal Declaration of Human Rights adopted'},
+    {year:1950,text:'Korean War begins — first major Cold War armed conflict'},
+    {year:1953,text:'Watson & Crick discover DNA double helix structure'},
+    {year:1955,text:'Rosa Parks refuses to give up her seat — Civil Rights Movement ignited'},
+    {year:1957,text:'Sputnik 1 launched — Space Age begins'},
+    {year:1961,text:'Yuri Gagarin becomes first human in space'},
+    {year:1962,text:'Cuban Missile Crisis — world on brink of nuclear war'},
+    {year:1963,text:'JFK assassinated in Dallas'},
+    {year:1968,text:'Martin Luther King Jr. assassinated — worldwide grief'},
+    {year:1969,text:'Apollo 11 — humans walk on the Moon for first time'},
+    {year:1971,text:'Intel releases first commercial microprocessor'},
+    {year:1973,text:'Oil crisis — OPEC embargo triggers global recession'},
+    {year:1975,text:'Vietnam War ends; Microsoft founded by Gates & Allen'},
+    {year:1976,text:'Apple Computer founded by Jobs & Wozniak'},
+    {year:1977,text:'Star Wars premieres — blockbuster cinema era begins'},
+    {year:1979,text:'Iranian Revolution — Shah overthrown, Islamic Republic established'},
+    {year:1980,text:'John Lennon shot dead outside his New York apartment'},
+    {year:1981,text:'IBM PC launches — personal computing goes mainstream'},
+    {year:1983,text:'HIV/AIDS identified — global health crisis begins'},
+    {year:1984,text:'Michael Jackson\'s Thriller becomes best-selling album of all time'},
+    {year:1985,text:'Live Aid concert raises $125M for Ethiopian famine relief'},
+    {year:1986,text:'Chernobyl nuclear disaster — worst in history'},
+    {year:1989,text:'Fall of Berlin Wall; Tiananmen Square massacre'},
+    {year:1990,text:'Hubble Space Telescope launched; Gulf War begins'},
+    {year:1991,text:'Soviet Union dissolves — Cold War ends; WWW opens to public'},
+    {year:1994,text:'Nelson Mandela elected — apartheid ends in South Africa'},
+    {year:1995,text:'eBay and Amazon founded; Oklahoma City bombing'},
+    {year:1997,text:'Hong Kong returned to China; Dolly the sheep cloned'},
+    {year:1998,text:'Google founded'},
+    {year:2000,text:'Human Genome Project draft completed — genetic medicine transforms'},
+    {year:2001,text:'September 11 attacks; Wikipedia launches'},
+    {year:2003,text:'SARS outbreak; US invades Iraq'},
+    {year:2004,text:'Indian Ocean tsunami kills 227,000; Facebook founded'},
+    {year:2005,text:'YouTube launches'},
+    {year:2007,text:'iPhone launches — smartphone revolution begins'},
+    {year:2008,text:'Global financial crisis; Obama elected first Black US president'},
+    {year:2009,text:'Bitcoin white paper — cryptocurrency born'},
+    {year:2010,text:'Arab Spring; Haiti earthquake kills 160,000+'},
+    {year:2011,text:'Osama bin Laden killed; Arab Spring topples leaders'},
+    {year:2012,text:'Curiosity lands on Mars; Higgs boson confirmed at CERN'},
+    {year:2014,text:'Malala wins Nobel Peace Prize; ISIS declares caliphate'},
+    {year:2015,text:'Paris Agreement on climate signed; gravitational waves detected'},
+    {year:2016,text:'Brexit referendum; Bob Dylan wins Nobel Literature Prize'},
+    {year:2019,text:'First black hole photo; 5G launches globally'},
+    {year:2020,text:'COVID-19 pandemic declared; SpaceX carries first crewed mission'},
+    {year:2021,text:'James Webb Space Telescope launched; Taliban retakes Afghanistan'},
+    {year:2022,text:'Russia invades Ukraine — largest Europe conflict since WWII'},
+    {year:2023,text:'AI revolution — ChatGPT reaches 100M users in record time'},
+    {year:2024,text:'Paris Summer Olympics — 206 nations compete'},
+  ];
+  return db.filter(e=>e.year>=start&&e.year<=end).map(e=>({...e,type:'global'}));
+}
+
+/* ══════════════════════════════════════
+   REGIONAL EVENTS DATABASE
+══════════════════════════════════════ */
+function getRegionalEvents(start,end,code){
+  const db={
+    us:[
+      {year:1941,text:'Japan attacks Pearl Harbor — U.S. enters World War II'},
+      {year:1963,text:'JFK assassinated in Dallas — America mourns its president'},
+      {year:1969,text:'Apollo 11 launched from Kennedy Space Center'},
+      {year:1974,text:'President Nixon resigns over Watergate scandal'},
+      {year:1980,text:'Mount St. Helens erupts'},
+      {year:1986,text:'Space Shuttle Challenger explodes 73 seconds after launch'},
+      {year:1992,text:'Los Angeles riots — 63 killed after Rodney King verdict'},
+      {year:1995,text:'Oklahoma City bombing kills 168 people'},
+      {year:2001,text:'September 11 attacks in New York and Washington'},
+      {year:2005,text:'Hurricane Katrina devastates New Orleans'},
+      {year:2008,text:'Barack Obama elected as first Black U.S. president'},
+      {year:2020,text:'George Floyd protests sweep across hundreds of cities'},
+      {year:2021,text:'Capitol Hill riot on January 6'},
+    ],
+    gb:[{year:1940,text:'Battle of Britain — RAF defeats Luftwaffe'},{year:1966,text:'England wins FIFA World Cup at Wembley'},{year:1979,text:'Margaret Thatcher becomes Britain\'s first female PM'},{year:1997,text:'Princess Diana dies in Paris; Labour wins landslide'},{year:2005,text:'7/7 London bombings'},{year:2012,text:'London Olympics — Team GB wins 65 medals'},{year:2016,text:'Brexit — UK votes to leave EU'},{year:2022,text:'Queen Elizabeth II passes away after 70 years on throne'}],
+    de:[{year:1933,text:'Hitler becomes Chancellor'},{year:1945,text:'Berlin falls — Nazi Germany surrenders'},{year:1961,text:'Berlin Wall constructed'},{year:1972,text:'Munich Olympics massacre'},{year:1989,text:'Fall of Berlin Wall'},{year:1990,text:'German reunification'},{year:2006,text:'Germany hosts FIFA World Cup'},{year:2014,text:'Germany wins FIFA World Cup, defeating Brazil 7-1'},{year:2015,text:'Germany accepts over 1 million refugees'}],
+    fr:[{year:1944,text:'Liberation of Paris from Nazi occupation'},{year:1968,text:'May 1968 student uprising'},{year:1998,text:'France wins FIFA World Cup on home soil'},{year:2015,text:'Paris terrorist attacks at Bataclan'},{year:2019,text:'Notre-Dame Cathedral devastated by fire'},{year:2024,text:'France hosts Paris Olympics'}],
+    jp:[{year:1945,text:'Atomic bombs dropped on Hiroshima and Nagasaki'},{year:1964,text:'Tokyo hosts Summer Olympics'},{year:1995,text:'Kobe earthquake kills 6,400+'},{year:1995,text:'Tokyo subway sarin attack'},{year:2011,text:'Tōhoku earthquake, tsunami, Fukushima disaster'},{year:2021,text:'Tokyo Olympics held a year late due to COVID'}],
+    cn:[{year:1949,text:'Mao Zedong proclaims People\'s Republic of China'},{year:1966,text:'Cultural Revolution begins'},{year:1989,text:'Tiananmen Square massacre'},{year:1997,text:'Hong Kong returned from Britain'},{year:2008,text:'Beijing Olympics; Sichuan earthquake'},{year:2020,text:'COVID-19 pandemic begins in Wuhan'}],
+    ru:[{year:1917,text:'Russian Revolution — Tsar overthrown'},{year:1953,text:'Stalin dies'},{year:1961,text:'Gagarin launched into space'},{year:1986,text:'Chernobyl disaster'},{year:1991,text:'Soviet Union dissolves'},{year:2014,text:'Russia annexes Crimea'},{year:2022,text:'Russia launches full-scale invasion of Ukraine'}],
+    in:[{year:1947,text:'India gains independence — partition creates Pakistan'},{year:1948,text:'Gandhi assassinated'},{year:1984,text:'Bhopal gas tragedy — worst industrial disaster in history'},{year:1991,text:'India opens economy — liberalization era begins'},{year:2008,text:'Mumbai terror attacks kill 166'},{year:2014,text:'Modi elected PM in historic landslide'},{year:2023,text:'Chandrayaan-3 lands on Moon\'s south pole'}],
+    au:[{year:2000,text:'Sydney Olympics — Australia wins 58 medals'},{year:2009,text:'Black Saturday bushfires kill 173 in Victoria'},{year:2019,text:'Black Summer bushfires burn 18M hectares'}],
+    br:[{year:1958,text:'Pelé leads Brazil to first World Cup at age 17'},{year:1970,text:'Brazil wins third World Cup — Pelé\'s final tournament'},{year:2014,text:'Brazil hosts World Cup — suffers 7-1 loss to Germany'},{year:2016,text:'Rio hosts Summer Olympics'},{year:2022,text:'Lula defeats Bolsonaro in presidential election'}],
+    ph:[{year:1941,text:'Japan invades the Philippines'},{year:1986,text:'EDSA People Power Revolution restores democracy'},{year:1991,text:'Mount Pinatubo erupts — second largest eruption of 20th century'},{year:2001,text:'EDSA II ousts President Estrada'},{year:2013,text:'Typhoon Haiyan devastates Visayas, 6,300+ killed'},{year:2016,text:'Duterte elected president'},{year:2022,text:'Marcos Jr. wins presidential election'}],
+    es:[{year:1975,text:'Franco dies — Spain transitions to democracy'},{year:1992,text:'Barcelona hosts Summer Olympics'},{year:2004,text:'Madrid train bombings kill 191'},{year:2008,text:'Spain wins UEFA Euro 2008'},{year:2010,text:'Spain wins FIFA World Cup'},{year:2017,text:'Catalan independence referendum'}],
+    it:[{year:1945,text:'Mussolini executed by partisans'},{year:1946,text:'Italy becomes a republic'},{year:1960,text:'Rome hosts Olympics'},{year:2006,text:'Italy wins FIFA World Cup'},{year:2020,text:'Italy becomes epicenter of Europe\'s COVID outbreak'}],
+    ca:[{year:1967,text:'Montreal Expo 67 — Canada\'s centennial celebration'},{year:1976,text:'Montreal hosts Olympics'},{year:1995,text:'Quebec referendum — 50.6% vote to remain in Canada'},{year:2010,text:'Vancouver hosts Winter Olympics'},{year:2015,text:'Justin Trudeau elected PM'}],
+    kr:[{year:1950,text:'Korean War begins'},{year:1988,text:'Seoul hosts Summer Olympics'},{year:2002,text:'South Korea co-hosts World Cup, reaches semi-finals'},{year:2019,text:'Parasite becomes first non-English Best Picture Oscar winner'},{year:2022,text:'K-pop and K-drama reach unprecedented global popularity'}],
+    mx:[{year:1968,text:'Tlatelolco massacre before Mexico City Olympics'},{year:1985,text:'Mexico City earthquake kills thousands'},{year:1994,text:'NAFTA; Zapatista uprising in Chiapas'},{year:2017,text:'7.1 magnitude earthquake strikes central Mexico'},{year:2018,text:'López Obrador wins historic landslide'}],
+    za:[{year:1960,text:'Sharpeville massacre'},{year:1990,text:'Mandela released after 27 years'},{year:1994,text:'First democratic elections — Mandela president'},{year:1995,text:'South Africa wins Rugby World Cup'},{year:2010,text:'South Africa hosts FIFA World Cup — first on African soil'}],
+    tr:[{year:1999,text:'Marmara earthquake kills 17,000+'},{year:2016,text:'Failed coup attempt'},{year:2023,text:'Catastrophic earthquake kills 50,000+'}],
+    ua:[{year:1986,text:'Chernobyl nuclear disaster'},{year:1991,text:'Ukraine declares independence'},{year:2004,text:'Orange Revolution'},{year:2014,text:'Euromaidan revolution; Russia annexes Crimea'},{year:2022,text:'Russia launches full-scale invasion'}],
+    ar:[{year:1978,text:'Argentina hosts and wins FIFA World Cup'},{year:1986,text:'Maradona\'s Hand of God and Goal of the Century'},{year:2001,text:'Argentina financial crisis'},{year:2022,text:'Argentina wins FIFA World Cup in Qatar'}],
+    ng:[{year:1960,text:'Nigeria gains independence from Britain'},{year:1967,text:'Biafran War begins — civil war kills up to 3 million'},{year:1999,text:'Nigeria returns to civilian rule'},{year:2014,text:'Boko Haram kidnaps 276 schoolgirls in Chibok'},{year:2020,text:'#EndSARS protests erupt nationwide'}],
+    id:[{year:1945,text:'Indonesia declares independence'},{year:1998,text:'Asian crisis triggers fall of Suharto'},{year:2004,text:'Indian Ocean tsunami kills 167,000 in Aceh'},{year:2019,text:'Indonesia announces capital move to Nusantara'}],
+  };
+  return(db[code]||[]).filter(e=>e.year>=start&&e.year<=end).slice(0,14).map(e=>({...e,type:'regional'}));
+}
+
+/* ── collapse empty ad wrappers ── */
+function collapseEmptyAds(){
+  document.querySelectorAll('ins.adsbygoogle').forEach(ins=>{
+    const status=ins.getAttribute('data-ad-status');
+    const parent=ins.closest('div');
+    if(!status||status==='unfilled'){
+      ins.style.display='none';
+      if(parent&&!parent.querySelector('ins[data-ad-status="filled"]')){
+        parent.style.cssText='display:none!important;margin:0!important;padding:0!important;height:0!important';
+      }
+    }
+  });
+}
+setTimeout(collapseEmptyAds,2500);
+setTimeout(collapseEmptyAds,5000);
+if(window.MutationObserver){
+  const obs=new MutationObserver(collapseEmptyAds);
+  setTimeout(()=>{
+    document.querySelectorAll('ins.adsbygoogle').forEach(ins=>
+      obs.observe(ins,{attributes:true,attributeFilter:['data-ad-status']}));
+  },500);
+}
+</script>
+</body>
+</html>
