@@ -311,7 +311,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 .info-note{font-size:12px;color:var(--tx3);margin-top:9px;text-align:center}
 .progress-bar-wrap{background:var(--bg3);border-radius:10px;height:8px;overflow:hidden;margin-top:8px}
 .progress-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--ac),#5AC8FA);transition:width 1s}
-/* ── loading progress ── */
+/* ── info modal ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .2s}
+.modal-overlay.open{opacity:1}
+.modal-box{background:var(--bg);border-radius:var(--rl);max-width:440px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transform:translateY(16px);transition:transform .2s}
+.modal-overlay.open .modal-box{transform:translateY(0)}
+.modal-header{display:flex;align-items:center;gap:12px;padding:20px 20px 0}
+.modal-emoji{font-size:32px}
+.modal-title{font-size:18px;font-weight:600;color:var(--tx);flex:1}
+.modal-close{background:var(--bg2);border:none;border-radius:50%;width:30px;height:30px;font-size:16px;cursor:pointer;color:var(--tx2);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.modal-close:hover{background:var(--bg3)}
+.modal-body{padding:16px 20px 24px;font-size:14px;color:var(--tx2);line-height:1.65}
+.modal-body strong{color:var(--tx)}
+.modal-body p{margin-bottom:10px}
+.modal-body p:last-child{margin-bottom:0}
+.modal-highlight{background:var(--bg2);border-radius:var(--rm);padding:12px 14px;margin:12px 0;border-left:3px solid var(--ac)}
+.modal-highlight .mh-val{font-size:22px;font-weight:700;color:var(--tx);margin-bottom:4px}
+.modal-highlight .mh-desc{font-size:13px;color:var(--tx2)}
+/* info button on astro cards */
+.astro-card{position:relative;cursor:default}
+.info-btn{position:absolute;top:8px;right:8px;width:20px;height:20px;border-radius:50%;background:var(--bg3);border:none;color:var(--tx3);font-size:11px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,color .15s}
+.info-btn:hover{background:var(--ac);color:#fff}
 .load-progress{max-width:400px;margin:0 auto;padding:0 20px 16px}
 .load-bar-wrap{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:16px}
 .load-bar-fill{height:100%;background:linear-gradient(90deg,var(--ac),#5AC8FA);border-radius:2px;transition:width .5s ease;width:0%}
@@ -401,6 +421,18 @@ ins.adsbygoogle[data-ad-status="filled"]{
   <div class="footer-logo">born<span>history</span>.com</div>
   <div class="footer-copy">© 2026–2027 bornhistory.com · Made by S.F.</div>
 </footer>
+
+<!-- Modal overlay -->
+<div class="modal-overlay" id="info-modal" onclick="closeModalOutside(event)">
+  <div class="modal-box" id="modal-box">
+    <div class="modal-header">
+      <div class="modal-emoji" id="modal-emoji">⭐</div>
+      <div class="modal-title" id="modal-title">Title</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
 
 <!-- Load data file first so MUSIC_DB / FILM_DB are ready for the main script -->
 <script src="data.js"></script>
@@ -983,10 +1015,32 @@ function buildAstro(birth,year,days){
     <div class="astro-section">
       <p class="sec-lbl">${t('zodiac')} · ${t('chinese')} · ${t('lifeNum')} · ${t('planetAge')}</p>
       <div class="astro-grid">
-        <div class="astro-card"><div class="astro-emoji">${z?z.emoji:'⭐'}</div><div class="astro-lbl">${t('zodiac')}</div><div class="astro-val">${z?z.s:'—'}</div></div>
-        <div class="astro-card"><div class="astro-emoji">${chineseEmojis[chIdx]}</div><div class="astro-lbl">${t('chinese')}</div><div class="astro-val">${chineseAnimals[chIdx]}</div></div>
-        <div class="astro-card"><div class="astro-emoji">🔢</div><div class="astro-lbl">${t('lifeNum')}</div><div class="astro-val">${lpn}</div></div>
-        ${planets.map(p=>`<div class="astro-card"><div class="astro-emoji">${p.emoji}</div><div class="astro-lbl">${p.n}</div><div class="astro-val">${(days/365.25/p.yr).toFixed(1)}</div><div class="astro-sub">yrs</div></div>`).join('')}
+        <div class="astro-card">
+          <button class="info-btn" onclick="showModal('zodiac','${z?z.emoji:'⭐'}','${z?z.s:'—'}',${zIdx})">ⓘ</button>
+          <div class="astro-emoji">${z?z.emoji:'⭐'}</div>
+          <div class="astro-lbl">${t('zodiac')}</div>
+          <div class="astro-val">${z?z.s:'—'}</div>
+        </div>
+        <div class="astro-card">
+          <button class="info-btn" onclick="showModal('chinese','${chineseEmojis[chIdx]}','${chineseAnimals[chIdx]}',${chIdx})">ⓘ</button>
+          <div class="astro-emoji">${chineseEmojis[chIdx]}</div>
+          <div class="astro-lbl">${t('chinese')}</div>
+          <div class="astro-val">${chineseAnimals[chIdx]}</div>
+        </div>
+        <div class="astro-card">
+          <button class="info-btn" onclick="showModal('lifepath','🔢','${lpn}',${lpn})">ⓘ</button>
+          <div class="astro-emoji">🔢</div>
+          <div class="astro-lbl">${t('lifeNum')}</div>
+          <div class="astro-val">${lpn}</div>
+        </div>
+        ${planets.map(p=>`
+        <div class="astro-card">
+          <button class="info-btn" onclick="showModal('planet','${p.emoji}','${p.n}',0,'${(days/365.25/p.yr).toFixed(1)}','${p.n}')">ⓘ</button>
+          <div class="astro-emoji">${p.emoji}</div>
+          <div class="astro-lbl">${p.n}</div>
+          <div class="astro-val">${(days/365.25/p.yr).toFixed(1)}</div>
+          <div class="astro-sub">yrs</div>
+        </div>`).join('')}
       </div>
     </div>`;
 }
@@ -1593,7 +1647,110 @@ function getRegionalEvents(start,end,code){
   return(db[code]||[]).filter(e=>e.year>=start&&e.year<=end).slice(0,14).map(e=>({...e,type:'regional'}));
 }
 
-/* ── collapse empty ad wrappers ── */
+/* ══ INFO MODAL ══ */
+const ZODIAC_INFO = {
+  0: {name:'Capricorn ♑', desc:'<p><strong>Dec 22 – Jan 19</strong></p><p>Capricorns are disciplined, ambitious, and patient. They are natural leaders who achieve their goals through hard work and persistence.</p><p>Element: <strong>Earth</strong> · Ruling planet: <strong>Saturn</strong></p><p>Famous Capricorns: Elon Musk, Michelle Obama, Isaac Newton, David Bowie.</p>'},
+  1: {name:'Aquarius ♒', desc:'<p><strong>Jan 20 – Feb 18</strong></p><p>Aquarians are innovative, independent, and humanitarian. They are visionaries who think ahead of their time and care deeply about making the world better.</p><p>Element: <strong>Air</strong> · Ruling planet: <strong>Uranus</strong></p><p>Famous Aquarians: Oprah Winfrey, Abraham Lincoln, Charles Darwin, Bob Marley.</p>'},
+  2: {name:'Pisces ♓', desc:'<p><strong>Feb 19 – Mar 20</strong></p><p>Pisces are empathetic, artistic, and intuitive. They are dreamers with deep emotional sensitivity and a strong connection to the arts.</p><p>Element: <strong>Water</strong> · Ruling planet: <strong>Neptune</strong></p><p>Famous Pisces: Albert Einstein, Rihanna, Steve Jobs, Kurt Cobain.</p>'},
+  3: {name:'Aries ♈', desc:'<p><strong>Mar 21 – Apr 19</strong></p><p>Aries are bold, energetic, and pioneering. They are natural-born leaders who love taking initiative and thrive on challenges.</p><p>Element: <strong>Fire</strong> · Ruling planet: <strong>Mars</strong></p><p>Famous Aries: Lady Gaga, Leonardo da Vinci, Vincent van Gogh, Marlon Brando.</p>'},
+  4: {name:'Taurus ♉', desc:'<p><strong>Apr 20 – May 20</strong></p><p>Taurus are reliable, practical, and devoted. They love beauty, comfort, and the finer things in life, and are deeply loyal to those they love.</p><p>Element: <strong>Earth</strong> · Ruling planet: <strong>Venus</strong></p><p>Famous Taurus: Adele, Shakespeare, Mark Zuckerberg, Queen Elizabeth II.</p>'},
+  5: {name:'Gemini ♊', desc:'<p><strong>May 21 – Jun 20</strong></p><p>Geminis are versatile, curious, and communicative. They are quick-witted and adaptable, with a natural gift for connecting with people.</p><p>Element: <strong>Air</strong> · Ruling planet: <strong>Mercury</strong></p><p>Famous Geminis: Marilyn Monroe, Kanye West, Paul McCartney, Angelina Jolie.</p>'},
+  6: {name:'Cancer ♋', desc:'<p><strong>Jun 21 – Jul 22</strong></p><p>Cancers are nurturing, intuitive, and deeply emotional. They are fiercely protective of loved ones and have an incredible memory for people and events.</p><p>Element: <strong>Water</strong> · Ruling planet: <strong>Moon</strong></p><p>Famous Cancers: Princess Diana, Tom Hanks, Frida Kahlo, Nikola Tesla.</p>'},
+  7: {name:'Leo ♌', desc:'<p><strong>Jul 23 – Aug 22</strong></p><p>Leos are charismatic, confident, and generous. They love the spotlight and have a natural flair for drama, creativity, and leadership.</p><p>Element: <strong>Fire</strong> · Ruling planet: <strong>Sun</strong></p><p>Famous Leos: Barack Obama, Madonna, Napoleon Bonaparte, Coco Chanel.</p>'},
+  8: {name:'Virgo ♍', desc:'<p><strong>Aug 23 – Sep 22</strong></p><p>Virgos are analytical, meticulous, and hardworking. They have a sharp eye for detail and a deep desire to be of service to others.</p><p>Element: <strong>Earth</strong> · Ruling planet: <strong>Mercury</strong></p><p>Famous Virgos: Mother Teresa, Beyoncé, Michael Jackson, Freddie Mercury.</p>'},
+  9: {name:'Libra ♎', desc:'<p><strong>Sep 23 – Oct 22</strong></p><p>Libras are diplomatic, fair-minded, and social. They are natural peacemakers who value harmony, justice, and beautiful surroundings.</p><p>Element: <strong>Air</strong> · Ruling planet: <strong>Venus</strong></p><p>Famous Libras: Gandhi, John Lennon, Kim Kardashian, F. Scott Fitzgerald.</p>'},
+  10:{name:'Scorpio ♏', desc:'<p><strong>Oct 23 – Nov 21</strong></p><p>Scorpios are passionate, determined, and perceptive. They are among the most intense signs — deeply loyal but also fiercely independent.</p><p>Element: <strong>Water</strong> · Ruling planet: <strong>Pluto</strong></p><p>Famous Scorpios: Bill Gates, Pablo Picasso, Marie Curie, Leonardo DiCaprio.</p>'},
+  11:{name:'Sagittarius ♐', desc:'<p><strong>Nov 22 – Dec 21</strong></p><p>Sagittarians are adventurous, optimistic, and philosophical. They are eternal seekers of knowledge and truth, always chasing the next horizon.</p><p>Element: <strong>Fire</strong> · Ruling planet: <strong>Jupiter</strong></p><p>Famous Sagittarians: Walt Disney, Winston Churchill, Jay-Z, Taylor Swift.</p>'},
+};
+
+const CHINESE_INFO = [
+  {name:'Rat 🐀',  desc:'<p><strong>Years:</strong> 1924, 1936, 1948, 1960, 1972, 1984, 1996, 2008, 2020</p><p>Rats are clever, quick-witted, and resourceful. They are charming and sociable, with strong instincts for survival and success. Rats are excellent at saving money but can be secretive.</p><p><strong>Compatible with:</strong> Ox, Dragon, Monkey</p>'},
+  {name:'Ox 🐂',   desc:'<p><strong>Years:</strong> 1925, 1937, 1949, 1961, 1973, 1985, 1997, 2009, 2021</p><p>Ox people are dependable, strong, and determined. They are hardworking and methodical, preferring steady progress over quick wins. Deeply reliable and trustworthy.</p><p><strong>Compatible with:</strong> Rat, Snake, Rooster</p>'},
+  {name:'Tiger 🐯', desc:'<p><strong>Years:</strong> 1926, 1938, 1950, 1962, 1974, 1986, 1998, 2010, 2022</p><p>Tigers are brave, confident, and unpredictable. Natural leaders with magnetic personalities who love a challenge. They are passionate and can be fiercely competitive.</p><p><strong>Compatible with:</strong> Horse, Dragon, Dog</p>'},
+  {name:'Rabbit 🐰', desc:'<p><strong>Years:</strong> 1927, 1939, 1951, 1963, 1975, 1987, 1999, 2011, 2023</p><p>Rabbits are gentle, elegant, and alert. They are kind, cautious, and have excellent taste. They value peace and stability above all, making them wonderful friends and partners.</p><p><strong>Compatible with:</strong> Sheep, Monkey, Dog, Pig</p>'},
+  {name:'Dragon 🐉', desc:'<p><strong>Years:</strong> 1928, 1940, 1952, 1964, 1976, 1988, 2000, 2012, 2024</p><p>Dragons are vital, strong, and charismatic. The most powerful sign in Chinese astrology — Dragons are natural leaders full of energy and ambition. They set trends and inspire others.</p><p><strong>Compatible with:</strong> Rat, Tiger, Snake, Monkey, Rooster</p>'},
+  {name:'Snake 🐍', desc:'<p><strong>Years:</strong> 1929, 1941, 1953, 1965, 1977, 1989, 2001, 2013, 2025</p><p>Snakes are wise, intuitive, and elegant. They are deep thinkers with great insight into people and situations. Snakes are mysterious, graceful, and often very creative.</p><p><strong>Compatible with:</strong> Ox, Rooster</p>'},
+  {name:'Horse 🐴', desc:'<p><strong>Years:</strong> 1930, 1942, 1954, 1966, 1978, 1990, 2002, 2014, 2026</p><p>Horses are energetic, animated, and love freedom. They are hardworking, adventurous, and excel in social situations. Horses have a strong sense of independence and passion.</p><p><strong>Compatible with:</strong> Tiger, Sheep, Dog</p>'},
+  {name:'Goat 🐐', desc:'<p><strong>Years:</strong> 1931, 1943, 1955, 1967, 1979, 1991, 2003, 2015</p><p>Goats are creative, gentle, and compassionate. They are artistic souls who value beauty and harmony. Goats tend to be reserved but have great inner strength.</p><p><strong>Compatible with:</strong> Rabbit, Horse, Pig</p>'},
+  {name:'Monkey 🐒', desc:'<p><strong>Years:</strong> 1932, 1944, 1956, 1968, 1980, 1992, 2004, 2016</p><p>Monkeys are witty, clever, and playful. They are quick learners with great intelligence and creativity. Monkeys love solving problems and can be incredibly inventive.</p><p><strong>Compatible with:</strong> Rat, Dragon</p>'},
+  {name:'Rooster 🐓', desc:'<p><strong>Years:</strong> 1933, 1945, 1957, 1969, 1981, 1993, 2005, 2017</p><p>Roosters are observant, hardworking, and courageous. They are perfectionists who take pride in their work and appearance. Roosters are confident and honest, sometimes bluntly so.</p><p><strong>Compatible with:</strong> Ox, Snake, Dragon</p>'},
+  {name:'Dog 🐕',  desc:'<p><strong>Years:</strong> 1934, 1946, 1958, 1970, 1982, 1994, 2006, 2018</p><p>Dogs are loyal, honest, and empathetic. They are the most faithful sign in the zodiac — always ready to fight for justice and protect those they love.</p><p><strong>Compatible with:</strong> Rabbit, Tiger, Horse</p>'},
+  {name:'Pig 🐷',  desc:'<p><strong>Years:</strong> 1935, 1947, 1959, 1971, 1983, 1995, 2007, 2019</p><p>Pigs are diligent, compassionate, and generous. They are sincere and tolerant, always seeing the good in people. Pigs have a great capacity for hard work and are very giving.</p><p><strong>Compatible with:</strong> Tiger, Rabbit, Sheep</p>'},
+];
+
+const LIFEPATH_INFO = {
+  1: 'The Leader. You are independent, pioneering, and self-reliant. You have strong leadership qualities and the drive to forge your own path. You thrive when you follow your own vision rather than others\'.',
+  2: 'The Peacemaker. You are cooperative, diplomatic, and sensitive. You have a gift for bringing people together and seeing all sides of a situation. Deep relationships and harmony are your greatest strengths.',
+  3: 'The Creator. You are expressive, optimistic, and creative. You have a natural gift for communication — whether through art, writing, music, or speaking. Joy and inspiration follow you wherever you go.',
+  4: 'The Builder. You are practical, hardworking, and disciplined. You build solid foundations in everything you do. Stability, order, and reliability are your superpowers — people trust and count on you.',
+  5: 'The Freedom Seeker. You are adventurous, versatile, and curious. You crave experience, travel, and change. You are a natural communicator who adapts quickly and inspires others with your energy.',
+  6: 'The Nurturer. You are caring, responsible, and idealistic. You have a strong sense of duty to family and community. You are a natural healer and teacher who brings warmth and stability to others.',
+  7: 'The Seeker. You are analytical, introspective, and spiritual. You are driven by a deep need to understand the world at its deepest level. Wisdom, research, and inner truth are your life\'s pursuits.',
+  8: 'The Powerhouse. You are ambitious, authoritative, and goal-oriented. You are built for success in the material world — business, finance, and leadership. You have the drive to build real-world empires.',
+  9: 'The Humanitarian. You are compassionate, generous, and wise. You feel a deep calling to serve humanity and make the world better. Your life is filled with broad perspective and selfless giving.',
+  11:'Master Number 11 — The Intuitive. You are highly sensitive, spiritual, and visionary. You are an old soul with powerful intuition and the ability to inspire others on a profound level.',
+  22:'Master Number 22 — The Master Builder. You have the rare ability to turn big dreams into reality. You combine vision with practical skill, able to create things that last for generations.',
+  33:'Master Number 33 — The Master Teacher. The most rare life path — you are a compassionate spiritual guide with the ability to uplift and heal humanity through wisdom and unconditional love.',
+};
+
+const PLANET_INFO = {
+  Mercury: 'Mercury orbits the Sun every <strong>88 days</strong> — the fastest planet. A year on Mercury equals just 3 months on Earth. It\'s the closest planet to the Sun and has extreme temperature swings from -180°C at night to 430°C during the day.',
+  Venus:   'Venus orbits the Sun every <strong>225 days</strong>. A year on Venus is about 7.5 Earth months. Venus rotates backwards compared to most planets — the Sun rises in the west there. It\'s the hottest planet despite not being closest to the Sun.',
+  Mars:    'Mars orbits the Sun every <strong>687 days</strong> — almost 2 Earth years. A Martian year is close enough to Earth\'s that seasons on Mars are similar, just longer. NASA\'s Curiosity rover has been exploring Mars since 2012.',
+  Jupiter: 'Jupiter orbits the Sun every <strong>11.86 years</strong>. It\'s the largest planet — so big that all other planets in the solar system could fit inside it. Its Great Red Spot is a storm larger than Earth that has raged for centuries.',
+  Saturn:  'Saturn orbits the Sun every <strong>29.5 years</strong>. Its famous rings are made of ice and rock. Saturn is the least dense planet — it would float in water. Only a person older than 29 has seen Saturn complete one full orbit in their lifetime.',
+  Uranus:  'Uranus orbits the Sun every <strong>84 years</strong>. It rotates on its side, making its seasons extreme — each pole experiences 42 years of continuous sunlight followed by 42 years of darkness. Only elderly people have seen it complete one orbit.',
+};
+
+function showModal(type, emoji, name, idx, extraVal, extraName){
+  const overlay = document.getElementById('info-modal');
+  const body    = document.getElementById('modal-body');
+  document.getElementById('modal-emoji').textContent = emoji;
+  document.getElementById('modal-title').textContent = name;
+
+  if(type === 'zodiac'){
+    const info = ZODIAC_INFO[idx];
+    body.innerHTML = info ? info.desc : '<p>No information available.</p>';
+  } else if(type === 'chinese'){
+    const info = CHINESE_INFO[idx];
+    if(info){
+      document.getElementById('modal-title').textContent = info.name;
+      body.innerHTML = info.desc;
+    }
+  } else if(type === 'lifepath'){
+    const desc = LIFEPATH_INFO[idx] || LIFEPATH_INFO[Number(idx)];
+    body.innerHTML = `
+      <div class="modal-highlight">
+        <div class="mh-val">Life Path ${idx}</div>
+        <div class="mh-desc">${desc || 'A unique and powerful life path number.'}</div>
+      </div>
+      <p>Your life path number is calculated by adding all digits of your birth date until a single digit (or master number 11, 22, 33) is reached.</p>
+      <p>It reveals your core personality, natural talents, and the challenges you are here to overcome.</p>`;
+  } else if(type === 'planet'){
+    const desc = PLANET_INFO[extraName] || '';
+    body.innerHTML = `
+      <div class="modal-highlight">
+        <div class="mh-val">${extraVal} years old</div>
+        <div class="mh-desc">Your age if you lived on ${extraName}</div>
+      </div>
+      <p>${desc}</p>
+      <p>This is calculated by dividing your age on Earth by the length of ${extraName}'s year relative to Earth's year.</p>`;
+  }
+
+  overlay.style.display = 'flex';
+  requestAnimationFrame(()=>overlay.classList.add('open'));
+}
+
+function closeModal(){
+  const overlay = document.getElementById('info-modal');
+  overlay.classList.remove('open');
+  setTimeout(()=>overlay.style.display='none', 200);
+}
+function closeModalOutside(e){
+  if(e.target === document.getElementById('info-modal')) closeModal();
+}
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
+</script>
 function collapseEmptyAds(){
   document.querySelectorAll('ins.adsbygoogle').forEach(ins=>{
     const status=ins.getAttribute('data-ad-status');
