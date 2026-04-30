@@ -852,6 +852,7 @@ const STEPS = [
   {id:'s3', icon:'⭐', key:'famousBirthday'},
   {id:'s4', icon:'🏙️', key:'famousCity'},
   {id:'s5', icon:'₿', key:'btcTitle'},
+  {id:'s6', icon:'🌐', key:'timelineTitle'},
 ];
 function showProgress(){
   document.getElementById('results-area').innerHTML = `
@@ -956,7 +957,9 @@ async function runTracker(){
     const wikiHTML=buildWikiHTML(wikiEvents,birth);
     const bdCelebHTML=buildBdCelebsHTML(bdCelebs,birth);
     const localHTML=buildLocalHTML(localPeople);
-    const timelineHTML=buildTimeline(year,selectedCity.countryCode,selectedCity.country);
+    setStep('s6','loading');
+    const timelineHTML=await buildTimeline(year,selectedCity.countryCode,selectedCity.country);
+    setStep('s6','done');
 
     document.getElementById('results-area').innerHTML=`
       <div class="results" id="life-card">
@@ -1328,11 +1331,24 @@ function copyLink(btn){
   navigator.clipboard.writeText(location.href).then(()=>{btn.textContent=t('shareCopied');setTimeout(()=>btn.textContent=t('shareCopy'),2000);});
 }
 
-/* ── Wikipedia events ── */
+/* ── Wikipedia language map ── */
+const WIKI_LANG = {en:'en',ru:'ru',zh:'zh',ja:'ja',ko:'ko',de:'de',fr:'fr',es:'es',pt:'pt',it:'it',th:'th'};
+
+/* ── Wikipedia events in user's language ── */
 async function fetchAllBirthdayEvents(birth){
   const mm=String(birth.getMonth()+1).padStart(2,'0');
   const dd=String(birth.getDate()).padStart(2,'0');
-  try{const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());return(d.events||[]).sort((a,b)=>a.year-b.year);}catch(e){return[];}
+  const wl = WIKI_LANG[lang] || 'en';
+  try{
+    const d=await fetch(`https://${wl}.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
+    const evs = (d.events||[]).sort((a,b)=>a.year-b.year);
+    // If non-English returned few results, fallback to English
+    if(evs.length < 3 && wl !== 'en'){
+      const fb=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
+      return (fb.events||[]).sort((a,b)=>a.year-b.year);
+    }
+    return evs;
+  }catch(e){return[];}
 }
 function buildWikiHTML(events,birth){
   if(!events.length)return'';
@@ -1434,11 +1450,61 @@ function buildLocalHTML(people){
   return`<div class="celeb-section"><p class="sec-lbl">${t('famousCity')} ${selectedCity.name}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
 }
 
-/* ── Timeline ── */
-function buildTimeline(birthYear,cc,cn){
+/* ── MyMemory auto-translation ── */
+// Map our lang codes to MyMemory language codes
+const MM_LANG = {en:'en-US',ru:'ru-RU',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',de:'de-DE',fr:'fr-FR',es:'es-ES',pt:'pt-BR',it:'it-IT',th:'th-TH'};
+const _txCache = {}; // in-memory translation cache
+
+async function translateText(text, targetLang){
+  if(targetLang === 'en') return text;
+  const key = targetLang + ':' + text;
+  if(_txCache[key]) return _txCache[key];
+  try{
+    const tl = MM_LANG[targetLang] || 'ru-RU';
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en-US|${tl}`;
+    const r = await fetch(url);
+    const d = await r.json();
+    const result = d?.responseData?.translatedText || text;
+    // MyMemory sometimes returns the original if it fails — check quality
+    const translated = (d?.responseStatus === 200 && result !== text) ? result : text;
+    _txCache[key] = translated;
+    return translated;
+  }catch(e){ return text; }
+}
+
+async function translateBatch(texts, targetLang){
+  if(targetLang === 'en') return texts;
+  // Translate in parallel, max 5 at a time to avoid rate limits
+  const results = [];
+  for(let i = 0; i < texts.length; i += 5){
+    const batch = texts.slice(i, i+5);
+    const translated = await Promise.all(batch.map(tx => translateText(tx, targetLang)));
+    results.push(...translated);
+    if(i + 5 < texts.length) await new Promise(r=>setTimeout(r,300)); // small delay
+  }
+  return results;
+}
+
+/* ── Timeline (async with auto-translation) ── */
+async function buildTimeline(birthYear,cc,cn){
   const end=Math.min(birthYear+40,new Date().getFullYear());
   const all=[...getGlobalEvents(birthYear,end),...getRegionalEvents(birthYear,end,cc)].sort((a,b)=>a.year-b.year);
   if(!all.length)return'';
+
+  let events = all;
+
+  // Auto-translate if not English
+  if(lang !== 'en'){
+    try{
+      const texts = all.map(ev => ev.text);
+      const translated = await translateBatch(texts, lang);
+      events = all.map((ev,i) => ({...ev, text: translated[i]}));
+    }catch(e){
+      // silently fall back to English if translation fails
+      events = all;
+    }
+  }
+
   return`
     <div class="timeline-section">
       <p class="sec-lbl">${t('timelineTitle')}</p>
@@ -1448,8 +1514,9 @@ function buildTimeline(birthYear,cc,cn){
       </div>
       <div class="tl-list">
         <div class="tl-line"></div>
-        ${all.map(ev=>`<div class="tl-item"><div class="tl-dot ${ev.type==='global'?'dot-g':'dot-r'}"></div><div class="tl-content"><div class="tl-yr">${ev.year}</div><div class="tl-tx">${ev.text}</div><span class="tl-badge ${ev.type==='global'?'tb-g':'tb-r'}">${ev.type==='global'?t('global'):(cn||t('regional'))}</span></div></div>`).join('')}
+        ${events.map(ev=>`<div class="tl-item"><div class="tl-dot ${ev.type==='global'?'dot-g':'dot-r'}"></div><div class="tl-content"><div class="tl-yr">${ev.year}</div><div class="tl-tx">${ev.text}</div><span class="tl-badge ${ev.type==='global'?'tb-g':'tb-r'}">${ev.type==='global'?t('global'):(cn||t('regional'))}</span></div></div>`).join('')}
       </div>
+      ${lang!=='en'?`<p class="info-note">🌐 Auto-translated · Powered by MyMemory</p>`:''}
     </div>`;
 }
 
