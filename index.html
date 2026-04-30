@@ -1331,6 +1331,37 @@ function copyLink(btn){
   navigator.clipboard.writeText(location.href).then(()=>{btn.textContent=t('shareCopied');setTimeout(()=>btn.textContent=t('shareCopy'),2000);});
 }
 
+/* ── MyMemory auto-translation ── */
+const MM_LANG = {en:'en-US',ru:'ru-RU',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',de:'de-DE',fr:'fr-FR',es:'es-ES',pt:'pt-BR',it:'it-IT',th:'th-TH'};
+const _txCache = {};
+
+async function translateText(text, targetLang){
+  if(targetLang==='en') return text;
+  const key = targetLang+':'+text;
+  if(_txCache[key]) return _txCache[key];
+  try{
+    const tl = MM_LANG[targetLang]||'ru-RU';
+    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en-US|${tl}`);
+    const d = await r.json();
+    const result = d?.responseData?.translatedText || text;
+    const out = (d?.responseStatus===200 && result!==text) ? result : text;
+    _txCache[key] = out;
+    return out;
+  }catch(e){ return text; }
+}
+
+async function translateBatch(texts, targetLang){
+  if(targetLang==='en') return texts;
+  const results=[];
+  for(let i=0;i<texts.length;i+=5){
+    const batch=texts.slice(i,i+5);
+    const translated=await Promise.all(batch.map(tx=>translateText(tx,targetLang)));
+    results.push(...translated);
+    if(i+5<texts.length) await new Promise(r=>setTimeout(r,250));
+  }
+  return results;
+}
+
 /* ── Wikipedia language map ── */
 const WIKI_LANG = {en:'en',ru:'ru',zh:'zh',ja:'ja',ko:'ko',de:'de',fr:'fr',es:'es',pt:'pt',it:'it',th:'th'};
 
@@ -1340,12 +1371,17 @@ async function fetchAllBirthdayEvents(birth){
   const dd=String(birth.getDate()).padStart(2,'0');
   const wl = WIKI_LANG[lang] || 'en';
   try{
-    const d=await fetch(`https://${wl}.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
+    // Always fetch from English for reliability and quantity
+    const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
     const evs = (d.events||[]).sort((a,b)=>a.year-b.year);
-    // If non-English returned few results, fallback to English
-    if(evs.length < 3 && wl !== 'en'){
-      const fb=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
-      return (fb.events||[]).sort((a,b)=>a.year-b.year);
+
+    // If non-English — translate the event texts via MyMemory
+    if(lang !== 'en' && evs.length > 0){
+      try{
+        const texts = evs.map(ev=>ev.text);
+        const translated = await translateBatch(texts, lang);
+        return evs.map((ev,i)=>({...ev, text: translated[i]}));
+      }catch(e){ return evs; }
     }
     return evs;
   }catch(e){return[];}
@@ -1365,7 +1401,7 @@ function buildWikiHTML(events,birth){
     <div class="wiki-section">
       <p class="sec-lbl">${t('eventsTitle')} ${dateStr}</p>
       ${sorted.map(ev=>`<div class="wiki-item"><div class="wiki-year">${ev.year}</div><div class="wiki-text">${ev.text}</div></div>`).join('')}
-      <p class="info-note">${events.length} ${t('eventsCount')}</p>
+      <p class="info-note">${events.length} ${t('eventsCount')}${lang!=='en'?' · 🌐 Auto-translated':''}</p>
     </div>`;
 }
 
@@ -1448,41 +1484,6 @@ function buildLocalHTML(people){
     return`<${tag} class="celeb-card" ${attrs}><div class="${avClass}">${avInner}</div><div class="celeb-name">${name}</div><div class="celeb-desc">${desc}</div>${wikiUrl?`<div class="wiki-hint">${t('wikiOpen')}</div>`:''}</${tag}>`;
   }).join('');
   return`<div class="celeb-section"><p class="sec-lbl">${t('famousCity')} ${selectedCity.name}</p><div class="celeb-grid">${cards}</div><p class="info-note">${t('clickWiki')}</p></div>`;
-}
-
-/* ── MyMemory auto-translation ── */
-// Map our lang codes to MyMemory language codes
-const MM_LANG = {en:'en-US',ru:'ru-RU',zh:'zh-CN',ja:'ja-JP',ko:'ko-KR',de:'de-DE',fr:'fr-FR',es:'es-ES',pt:'pt-BR',it:'it-IT',th:'th-TH'};
-const _txCache = {}; // in-memory translation cache
-
-async function translateText(text, targetLang){
-  if(targetLang === 'en') return text;
-  const key = targetLang + ':' + text;
-  if(_txCache[key]) return _txCache[key];
-  try{
-    const tl = MM_LANG[targetLang] || 'ru-RU';
-    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en-US|${tl}`;
-    const r = await fetch(url);
-    const d = await r.json();
-    const result = d?.responseData?.translatedText || text;
-    // MyMemory sometimes returns the original if it fails — check quality
-    const translated = (d?.responseStatus === 200 && result !== text) ? result : text;
-    _txCache[key] = translated;
-    return translated;
-  }catch(e){ return text; }
-}
-
-async function translateBatch(texts, targetLang){
-  if(targetLang === 'en') return texts;
-  // Translate in parallel, max 5 at a time to avoid rate limits
-  const results = [];
-  for(let i = 0; i < texts.length; i += 5){
-    const batch = texts.slice(i, i+5);
-    const translated = await Promise.all(batch.map(tx => translateText(tx, targetLang)));
-    results.push(...translated);
-    if(i + 5 < texts.length) await new Promise(r=>setTimeout(r,300)); // small delay
-  }
-  return results;
 }
 
 /* ── Timeline (async with auto-translation) ── */
