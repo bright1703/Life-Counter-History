@@ -69,6 +69,15 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"/>
 <link rel="apple-touch-icon" sizes="192x192" href="/favicon-192.png"/>
 
+<!-- ═══ Google Analytics GA4 ═══ -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-363E7HHLXZ"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-363E7HHLXZ');
+</script>
+
 <!-- ═══ Google AdSense ═══ -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8902130785981866" crossorigin="anonymous"></script>
 
@@ -377,6 +386,9 @@ ins.adsbygoogle[data-ad-status="filled"]{
   <div class="footer-logo">born<span>history</span>.com</div>
   <div class="footer-copy">© 2026–2027 bornhistory.com · Made by S.F.</div>
 </footer>
+
+<!-- Load data file first so MUSIC_DB / FILM_DB are ready for the main script -->
+<script src="data.js"></script>
 
 <script>
 /* ══════════════════════════════════════
@@ -972,45 +984,13 @@ function buildBitcoin(year, btcLivePrice){
     </div>`;
 }
 function buildMedia(year){
-  const musicDb={
-    1950:['Goodnight Irene – Leadbelly','Tennessee Waltz – Patti Page','Mona Lisa – Nat King Cole'],
-    1955:['Rock Around the Clock – Bill Haley','Sixteen Tons – Tennessee Ernie Ford','Ain\'t That a Shame – Fats Domino'],
-    1960:['It\'s Now or Never – Elvis Presley','Are You Lonesome – Elvis','Running Scared – Roy Orbison'],
-    1965:['(I Can\'t Get No) Satisfaction – The Rolling Stones','Like a Rolling Stone – Bob Dylan','Help! – The Beatles'],
-    1970:['Bridge Over Troubled Water – Simon & Garfunkel','Let It Be – The Beatles','In the Summertime – Mungo Jerry'],
-    1975:['Bohemian Rhapsody – Queen','Fame – David Bowie','Dancing Queen – ABBA'],
-    1980:['Another One Bites the Dust – Queen','Call Me – Blondie','Lady – Kenny Rogers'],
-    1985:['We Are the World – USA for Africa','Careless Whisper – George Michael','Like a Virgin – Madonna'],
-    1990:['Nothing Compares 2 U – Sinéad O\'Connor','Vogue – Madonna','Blinding Lights – The Weeknd'],
-    1995:['Gangsta\'s Paradise – Coolio','Waterfalls – TLC','Creep – Radiohead'],
-    2000:['How You Remind Me – Nickelback','Hanging by a Moment – Lifehouse','California Dreamin\' – Mamas & Papas'],
-    2005:['Hollaback Girl – Gwen Stefani','Since U Been Gone – Kelly Clarkson','Feel Good Inc – Gorillaz'],
-    2010:['Tik Tok – Kesha','Need You Now – Lady Antebellum','Alejandro – Lady Gaga'],
-    2015:['Hello – Adele','Shape of You – Ed Sheeran','Uptown Funk – Bruno Mars'],
-    2020:['Blinding Lights – The Weeknd','Dynamite – BTS','drivers license – Olivia Rodrigo'],
-  };
-  const filmDb={
-    1950:['All About Eve','Sunset Boulevard','Rashomon'],
-    1955:['Rebel Without a Cause','Marty','The Night of the Hunter'],
-    1960:['Psycho','Spartacus','The Apartment'],
-    1965:['The Sound of Music','Doctor Zhivago','For a Few Dollars More'],
-    1970:['Patton','MASH','The Conformist'],
-    1975:['Jaws','One Flew Over the Cuckoo\'s Nest','Barry Lyndon'],
-    1980:['Star Wars: Empire Strikes Back','Raging Bull','The Shining'],
-    1985:['Back to the Future','The Color Purple','Witness'],
-    1990:['Goodfellas','Home Alone','Dances with Wolves'],
-    1995:['Toy Story','Se7en','Braveheart'],
-    2000:['Gladiator','Memento','Cast Away'],
-    2005:['Batman Begins','Brokeback Mountain','Munich'],
-    2010:['Inception','The Social Network','Toy Story 3'],
-    2015:['Mad Max: Fury Road','The Revenant','Spotlight'],
-    2020:['Parasite','Tenet','Soul'],
-  };
-  function closestYear(db,y){const keys=Object.keys(db).map(Number).sort((a,b)=>a-b);return keys.reduce((a,b)=>Math.abs(b-y)<Math.abs(a-y)?b:a);}
-  const mYear=closestYear(musicDb,year);
-  const fYear=closestYear(filmDb,year);
-  const songs=musicDb[mYear];
-  const films=filmDb[fYear];
+  if(!window.MUSIC_DB || !window.FILM_DB){
+    return '<div class="err-box">Media data not loaded. Make sure data.js is in the same folder.</div>';
+  }
+  const mYear = window.closestYear(window.MUSIC_DB, year);
+  const fYear = window.closestYear(window.FILM_DB, year);
+  const songs = window.MUSIC_DB[mYear];
+  const films = window.FILM_DB[fYear];
   return `
     <div class="media-section">
       <div class="media-grid">
@@ -1020,7 +1000,7 @@ function buildMedia(year){
         </div>
         <div class="media-card">
           <div class="media-top"><div class="media-icon">🎬</div><div class="media-title">${t('filmTitle')}</div></div>
-          ${films.map((f,i)=>`<div class="media-item"><div class="media-rank">#${i+1}</div><div class="media-name">${f}</div></div>`).join('')}
+          ${films.map((f,i)=>`<div class="media-item"><div class="media-rank">#${i+1}</div><div class="media-name">${f.split('–')[0]?.trim()||f}</div><div class="media-sub">${f.split('–')[1]?.trim()||''}</div></div>`).join('')}
         </div>
       </div>
     </div>`;
