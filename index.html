@@ -831,7 +831,7 @@ document.addEventListener('click',e=>{if(!e.target.closest('.autocomplete-wrap')
 
 /* ══ CACHE helpers ══ */
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
-function cacheKey(dobVal, cityName){ return `bh_${dobVal}_${cityName}`; }
+function cacheKey(dobVal, cityName){ return `bh_${dobVal}_${cityName}_${lang}`; }
 function cacheGet(key){
   try{
     const raw = localStorage.getItem(key);
@@ -1341,23 +1341,43 @@ async function translateText(text, targetLang){
   if(_txCache[key]) return _txCache[key];
   try{
     const tl = MM_LANG[targetLang]||'ru-RU';
-    const r = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en-US|${tl}`);
+    // MyMemory API — free, no key needed, CORS-friendly
+    const r = await fetch(
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${tl.split('-')[0]}`,
+      {headers:{'Accept':'application/json'}}
+    );
     const d = await r.json();
-    const result = d?.responseData?.translatedText || text;
-    const out = (d?.responseStatus===200 && result!==text) ? result : text;
-    _txCache[key] = out;
-    return out;
+    const result = d?.responseData?.translatedText;
+    if(result && result !== text && d?.responseStatus === 200){
+      _txCache[key] = result;
+      return result;
+    }
+    // Fallback: try LibreTranslate public instance
+    try{
+      const r2 = await fetch('https://libretranslate.de/translate',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({q:text,source:'en',target:tl.split('-')[0],format:'text'})
+      });
+      const d2 = await r2.json();
+      if(d2?.translatedText && d2.translatedText !== text){
+        _txCache[key] = d2.translatedText;
+        return d2.translatedText;
+      }
+    }catch(e2){}
+    return text;
   }catch(e){ return text; }
 }
 
 async function translateBatch(texts, targetLang){
   if(targetLang==='en') return texts;
   const results=[];
-  for(let i=0;i<texts.length;i+=5){
-    const batch=texts.slice(i,i+5);
+  // Translate in small batches of 3 with delay to avoid rate limits
+  for(let i=0;i<texts.length;i+=3){
+    const batch=texts.slice(i,i+3);
     const translated=await Promise.all(batch.map(tx=>translateText(tx,targetLang)));
     results.push(...translated);
-    if(i+5<texts.length) await new Promise(r=>setTimeout(r,250));
+    if(i+3<texts.length) await new Promise(r=>setTimeout(r,400));
   }
   return results;
 }
