@@ -302,7 +302,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 .tb-g{background:var(--pf);color:var(--pt)}.tb-r{background:var(--tf);color:var(--tt)}
 
 /* ── misc ── */
-.loading-state{text-align:center;padding:40px 20px;color:var(--tx2);font-size:15px}
+.loading-state{text-align:center;padding:24px 20px 16px;color:var(--tx2);font-size:15px}
 .ld{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--tx3);margin:0 3px;animation:bounce 1.2s infinite}
 .ld:nth-child(2){animation-delay:.2s}.ld:nth-child(3){animation-delay:.4s}
 @keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-6px)}}
@@ -311,6 +311,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--tx);min-height:100
 .info-note{font-size:12px;color:var(--tx3);margin-top:9px;text-align:center}
 .progress-bar-wrap{background:var(--bg3);border-radius:10px;height:8px;overflow:hidden;margin-top:8px}
 .progress-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--ac),#5AC8FA);transition:width 1s}
+/* ── loading progress ── */
+.load-progress{max-width:400px;margin:0 auto;padding:0 20px 16px}
+.load-bar-wrap{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:16px}
+.load-bar-fill{height:100%;background:linear-gradient(90deg,var(--ac),#5AC8FA);border-radius:2px;transition:width .5s ease;width:0%}
+.load-steps{display:flex;flex-direction:column;gap:7px}
+.load-step{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--tx2)}
+.load-step-icon{font-size:15px;width:22px;text-align:center;flex-shrink:0}
+.load-step-text{flex:1}
+.load-step-badge{font-size:11px;padding:1px 7px;border-radius:8px;font-weight:500}
+.lsb-done{background:var(--gf);color:var(--gt)}
+.lsb-loading{background:var(--cf);color:var(--ct)}
+.lsb-pending{background:var(--bg3);color:var(--tx3)}
 
 /* ── print ── */
 @media print{
@@ -730,14 +742,70 @@ function selectCity(i){
 }
 document.addEventListener('click',e=>{if(!e.target.closest('.autocomplete-wrap'))document.getElementById('city-suggestions').innerHTML='';});
 
+/* ══ CACHE helpers ══ */
+const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+function cacheKey(dobVal, cityName){ return `bh_${dobVal}_${cityName}`; }
+function cacheGet(key){
+  try{
+    const raw = localStorage.getItem(key);
+    if(!raw) return null;
+    const {ts, data} = JSON.parse(raw);
+    if(Date.now() - ts > CACHE_TTL){ localStorage.removeItem(key); return null; }
+    return data;
+  }catch(e){ return null; }
+}
+function cacheSet(key, data){
+  try{ localStorage.setItem(key, JSON.stringify({ts: Date.now(), data})); }catch(e){}
+}
+
+/* ══ PROGRESS UI ══ */
+const STEPS = [
+  {id:'s1', icon:'☁️', key:'weatherBirth'},
+  {id:'s2', icon:'📅', key:'eventsTitle'},
+  {id:'s3', icon:'⭐', key:'famousBirthday'},
+  {id:'s4', icon:'🏙️', key:'famousCity'},
+  {id:'s5', icon:'₿', key:'btcTitle'},
+];
+function showProgress(){
+  document.getElementById('results-area').innerHTML = `
+    <div class="loading-state">${t('loading')}</div>
+    <div class="load-progress">
+      <div class="load-bar-wrap"><div class="load-bar-fill" id="load-bar"></div></div>
+      <div class="load-steps">
+        ${STEPS.map(s=>`
+          <div class="load-step" id="${s.id}">
+            <span class="load-step-icon">${s.icon}</span>
+            <span class="load-step-text">${t(s.key)||s.key}</span>
+            <span class="load-step-badge lsb-pending" id="${s.id}-badge">Waiting</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function setStep(id, status){
+  const badge = document.getElementById(id+'-badge');
+  if(!badge) return;
+  badge.className = 'load-step-badge ' + (status==='done'?'lsb-done':status==='loading'?'lsb-loading':'lsb-pending');
+  badge.textContent = status==='done'?'✓ Done':status==='loading'?'Loading…':'Waiting';
+  // update bar
+  const done = STEPS.filter(s => document.getElementById(s.id+'-badge')?.textContent === '✓ Done').length;
+  const bar = document.getElementById('load-bar');
+  if(bar) bar.style.width = Math.round((done/STEPS.length)*100) + '%';
+}
+
 /* ══ MAIN TRACKER ══ */
 async function runTracker(){
   const dobVal=document.getElementById('dob').value;
   if(!dobVal){alert(t('dob')+' required');return;}
   if(!selectedCity){alert(t('city')+' required');return;}
   const btn=document.getElementById('go-btn');
-  btn.disabled=true;btn.textContent=t('loading')+'…';
-  document.getElementById('results-area').innerHTML=`<div class="loading-state">${t('loading')}<span class="ld"></span><span class="ld"></span><span class="ld"></span></div>`;
+  btn.disabled=true; btn.textContent=t('loading')+'…';
+
+  // Check cache first
+  const ck = cacheKey(dobVal, selectedCity.name);
+  const cached = cacheGet(ck);
+
+  showProgress();
+
   try{
     const birth=new Date(dobVal+'T12:00:00');
     const year=birth.getFullYear();
@@ -749,25 +817,46 @@ async function runTracker(){
     const breaths=Math.round(secondsLived*16/60);
     const sleepHrs=Math.round(daysLived*8);
     const blinks=Math.round(secondsLived*0.28);
-    // Life expectancy by country (WHO 2023 data)
     const leByCountry={
       us:79,gb:81,de:81,fr:83,it:83,es:84,pt:82,nl:82,be:82,ch:84,at:82,se:83,no:83,dk:81,fi:82,
       jp:84,kr:83,au:83,nz:82,ca:82,sg:84,hk:85,il:83,
       cn:78,th:77,my:76,br:76,mx:75,ar:77,cl:80,co:77,pe:77,
       ru:73,ua:73,pl:78,cz:79,hu:76,ro:76,bg:75,hr:78,sk:77,si:81,
       tr:78,sa:76,ae:78,ir:77,eg:72,za:65,ng:55,ke:67,gh:64,
-      in:70,pk:68,bd:73,id:72,ph:71,vn:75,ph:71,
+      in:70,pk:68,bd:73,id:72,ph:71,vn:75,
     };
     const lifeExpectancy = leByCountry[selectedCity.countryCode] || 78;
     const lifePercent=Math.min(99,(daysLived/(lifeExpectancy*365.25)*100)).toFixed(1);
 
-    const [weatherHTML,wikiEvents,bdCelebs,localPeople,btcLivePrice]=await Promise.all([
-      buildWeather(dobVal,birth,year),
-      fetchAllBirthdayEvents(birth),
-      fetchBirthdayCelebs(birth),
-      fetchLocalCelebs(selectedCity),
-      fetchBtcPrice()
-    ]);
+    let weatherHTML, wikiEvents, bdCelebs, localPeople, btcLivePrice;
+
+    if(cached){
+      // Use cached data — just animate steps quickly
+      ({weatherHTML, wikiEvents, bdCelebs, localPeople, btcLivePrice} = cached);
+      STEPS.forEach(s => { setStep(s.id,'loading'); setTimeout(()=>setStep(s.id,'done'),200+Math.random()*300); });
+      await new Promise(r=>setTimeout(r,600));
+    } else {
+      // Fetch all in parallel with individual progress updates
+      setStep('s1','loading'); setStep('s2','loading');
+
+      const weatherProm = buildWeather(dobVal,birth,year).then(r=>{ setStep('s1','done'); return r; });
+      const wikiProm    = fetchAllBirthdayEvents(birth).then(r=>{ setStep('s2','done'); return r; });
+
+      setStep('s3','loading');
+      const celebProm   = fetchBirthdayCelebs(birth).then(r=>{ setStep('s3','done'); return r; });
+
+      setStep('s4','loading');
+      const localProm   = fetchLocalCelebs(selectedCity).then(r=>{ setStep('s4','done'); return r; });
+
+      setStep('s5','loading');
+      const btcProm     = fetchBtcPrice().then(r=>{ setStep('s5','done'); return r; });
+
+      [weatherHTML, wikiEvents, bdCelebs, localPeople, btcLivePrice] =
+        await Promise.all([weatherProm, wikiProm, celebProm, localProm, btcProm]);
+
+      // Save to cache (store serializable data)
+      cacheSet(ck, {weatherHTML, wikiEvents, bdCelebs, localPeople, btcLivePrice});
+    }
 
     const statsHTML=buildStats(daysLived,heartbeats,orbits,breaths,sleepHrs,blinks,lifePercent,lifeExpectancy);
     const astroHTML=buildAstro(birth,year,daysLived);
@@ -1144,7 +1233,7 @@ async function fetchBirthdayCelebs(birth){
   try{
     const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/${mm}/${dd}`).then(r=>r.json());
     const births=(d.births||[]).filter(b=>b.pages?.length&&b.pages[0].description);
-    const candidates=births.sort((a,b)=>(b.pages[0].thumbnail?1:0)-(a.pages[0].thumbnail?1:0)).slice(0,40);
+    const candidates=births.sort((a,b)=>(b.pages[0].thumbnail?1:0)-(a.pages[0].thumbnail?1:0)).slice(0,20);
     const summaries=await Promise.allSettled(candidates.map(b=>{
       const slug=b.pages[0].titles?.canonical||b.pages[0].title||'';
       return slug?fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`).then(r=>r.json()).catch(()=>null):Promise.resolve(null);
