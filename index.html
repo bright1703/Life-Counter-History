@@ -1750,7 +1750,8 @@ function closeModalOutside(e){
   if(e.target === document.getElementById('info-modal')) closeModal();
 }
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeModal(); });
-</script>
+
+/* ── collapse empty ad wrappers ── */
 function collapseEmptyAds(){
   document.querySelectorAll('ins.adsbygoogle').forEach(ins=>{
     const status=ins.getAttribute('data-ad-status');
