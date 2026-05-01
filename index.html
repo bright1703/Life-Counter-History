@@ -419,7 +419,15 @@ ins.adsbygoogle[data-ad-status="filled"]{
 
 <footer class="site-footer no-print">
   <div class="footer-logo">born<span>history</span>.com</div>
-  <div class="footer-copy">© 2026–2027 bornhistory.com · Made by S.F.</div>
+  <div class="footer-copy" id="footer-copy"></div>
+<script>
+(function(){
+  const start = 2026;
+  const now = new Date().getFullYear();
+  const yr = now > start ? start + '–' + now : start;
+  document.getElementById('footer-copy').textContent = '© ' + yr + ' bornhistory.com · Made by S.F.';
+})();
+</script>
 </footer>
 
 <!-- Modal overlay -->
