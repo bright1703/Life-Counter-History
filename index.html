@@ -1349,38 +1349,27 @@ async function translateText(text, targetLang){
   if(_txCache[key]) return _txCache[key];
   try{
     const tl = MM_LANG[targetLang]||'ru-RU';
-    // MyMemory API — free, no key needed, CORS-friendly
+    // Add 5 second timeout to prevent hanging
+    const controller = new AbortController();
+    const timeout = setTimeout(()=>controller.abort(), 5000);
     const r = await fetch(
-      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=en|${tl.split('-')[0]}`,
-      {headers:{'Accept':'application/json'}}
+      `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text.slice(0,300))}&langpair=en|${tl.split('-')[0]}`,
+      {headers:{'Accept':'application/json'}, signal: controller.signal}
     );
+    clearTimeout(timeout);
     const d = await r.json();
     const result = d?.responseData?.translatedText;
     if(result && result !== text && d?.responseStatus === 200){
       _txCache[key] = result;
       return result;
     }
-    // Fallback: try LibreTranslate public instance
-    try{
-      const r2 = await fetch('https://libretranslate.de/translate',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({q:text,source:'en',target:tl.split('-')[0],format:'text'})
-      });
-      const d2 = await r2.json();
-      if(d2?.translatedText && d2.translatedText !== text){
-        _txCache[key] = d2.translatedText;
-        return d2.translatedText;
-      }
-    }catch(e2){}
     return text;
-  }catch(e){ return text; }
+  }catch(e){ return text; } // on timeout or error return original
 }
 
 async function translateBatch(texts, targetLang){
   if(targetLang==='en') return texts;
   const results=[];
-  // Translate in small batches of 3 with delay to avoid rate limits
   for(let i=0;i<texts.length;i+=3){
     const batch=texts.slice(i,i+3);
     const translated=await Promise.all(batch.map(tx=>translateText(tx,targetLang)));
@@ -1403,12 +1392,16 @@ async function fetchAllBirthdayEvents(birth){
     const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${mm}/${dd}`).then(r=>r.json());
     const evs = (d.events||[]).sort((a,b)=>a.year-b.year);
 
-    // If non-English — translate the event texts via MyMemory
+    // If non-English — translate only the 8 most important events
     if(lang !== 'en' && evs.length > 0){
       try{
-        const texts = evs.map(ev=>ev.text);
+        // Take only 8 events to translate — avoids rate limits and hanging
+        const toTranslate = evs.slice(0, 8);
+        const texts = toTranslate.map(ev=>ev.text);
         const translated = await translateBatch(texts, lang);
-        return evs.map((ev,i)=>({...ev, text: translated[i]}));
+        const translatedEvs = toTranslate.map((ev,i)=>({...ev, text: translated[i]}));
+        // Keep remaining events in English
+        return [...translatedEvs, ...evs.slice(8)];
       }catch(e){ return evs; }
     }
     return evs;
