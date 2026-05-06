@@ -809,6 +809,7 @@ function toggleTheme(){
 let selectedCity=null,suggTimeout=null;
 document.getElementById('city-input').addEventListener('input',function(){
   clearTimeout(suggTimeout);
+  selectedCity=null; // clear selection when user types again
   const q=this.value.trim();
   if(q.length<2){document.getElementById('city-suggestions').innerHTML='';return;}
   suggTimeout=setTimeout(()=>fetchCities(q),300);
@@ -1427,27 +1428,57 @@ function buildWikiHTML(events,birth){
 }
 
 /* ── Famous people – same birthday ── */
-const TIER1=/president of the united states|prime minister of (the )?uk|general secretary|emperor of|king of|queen of|pope|pharaoh|nobel (peace |prize |laureate)|world heavyweight|formula one world champion|fifa world (cup|player)|olympic gold|grammy award|oscar.winning|academy award|pulitzer|fields medal|turing award/i;
-const TIER2=/american (actor|actress|singer|rapper|musician|director|filmmaker|comedian|athlete|footballer|basketball|tennis|swimmer|boxer|golfer|sprinter|gymnast|cyclist|cricketer|olympian)|british (actor|actress|singer|musician|director)|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|philosopher|physicist|mathematician|inventor|astronaut|novelist|poet|painter|sculptor|composer|conductor|politician|statesman|dictator|monarch|chancellor|senator|activist|saint|explorer/i;
-const TIER3=/actor|actress|singer|musician|composer|rapper|filmmaker|director|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|entrepreneur|founder|scientist|biologist|chemist|astronomer|geographer|historian|journalist|comedian/i;
+const TIER1=/president of the united states|founding father|prime minister of (the )?uk|general secretary|emperor of|king of|queen of|pope|pharaoh|nobel (peace |prize |laureate)|world heavyweight champion|formula one world champion|fifa world (cup|player of the year)|olympic gold medal|grammy award|oscar.winning|academy award|pulitzer|fields medal|turing award|commander.in.chief|head of state|revolutionary leader/i;
+const TIER2=/american (president|general|founding)|president|prime minister|king|queen|emperor|empress|pharaoh|pope|revolutionary|general|admiral|philosopher|physicist|mathematician|inventor|astronaut|novelist|poet|painter|sculptor|composer|conductor|politician|statesman|dictator|monarch|chancellor|senator|activist|saint|explorer|conqueror|reformer|liberator/i;
+const TIER3=/actor|actress|singer|musician|rapper|filmmaker|director|athlete|footballer|basketball|tennis|swimmer|boxer|cyclist|sprinter|gymnast|golfer|cricketer|olympian|champion|entrepreneur|scientist|biologist|chemist|astronomer|historian|journalist|comedian/i;
 
-function notabilityScore(p,full){
-  if(!p)return 0;
-  let s=0;
-  const desc=(p.description||'').toLowerCase(),extract=(full?.extract||'').toLowerCase(),c=desc+' '+extract;
-  if(p.thumbnail?.source)s+=50;
-  if(TIER1.test(c))s+=120;else if(TIER2.test(c))s+=60;else if(TIER3.test(c))s+=20;else s-=40;
-  s+=Math.min((full?.extract||'').length/15,60);
-  if(desc.includes('minor')||desc.includes('local'))s-=30;
+// Heavily penalise descriptions suggesting minor fame
+const MINOR=/born 199[0-9]|born 200[0-9]|born 201[0-9]|tiktok|instagram|youtube|reality|influencer|minor|local|regional/i;
+
+function notabilityScore(p, full){
+  if(!p) return 0;
+  let s = 0;
+  const desc = (p.description||'').toLowerCase();
+  const extract = (full?.extract||'').toLowerCase();
+  const c = desc + ' ' + extract;
+
+  // Photo bonus — but don't over-rely on it
+  if(p.thumbnail?.source) s += 30;
+
+  // Tier bonuses — heavily weighted
+  if(TIER1.test(c))      s += 200;
+  else if(TIER2.test(c)) s += 100;
+  else if(TIER3.test(c)) s += 30;
+  else                   s -= 60; // heavy penalty for no recognisable role
+
+  // Article length — most reliable fame signal
+  const len = (full?.extract||'').length;
+  s += Math.min(len / 10, 80); // up to +80 for a very long article
+
+  // Born long ago = more historical significance
+  // Historical figures (pre-1950) get a big bonus
+  if(p.born && p.born < 1950) s += 40;
+  if(p.born && p.born < 1900) s += 40;
+  if(p.born && p.born < 1800) s += 40;
+
+  // Penalise minor/modern social media fame
+  if(MINOR.test(c)) s -= 80;
+
   return s;
 }
+
 async function fetchBirthdayCelebs(birth){
   const mm=String(birth.getMonth()+1).padStart(2,'0');
   const dd=String(birth.getDate()).padStart(2,'0');
   try{
     const d=await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/births/${mm}/${dd}`).then(r=>r.json());
     const births=(d.births||[]).filter(b=>b.pages?.length&&b.pages[0].description);
-    const candidates=births.sort((a,b)=>(b.pages[0].thumbnail?1:0)-(a.pages[0].thumbnail?1:0)).slice(0,20);
+
+    // Sort by birth year desc to get more diverse candidates (not just recent people)
+    // Take top 30 mixing old and new
+    const withOld = births.filter(b => b.year < 1980).slice(0,15);
+    const withNew = births.filter(b => b.year >= 1980).slice(0,15);
+    const candidates = [...withOld, ...withNew];
     const summaries=await Promise.allSettled(candidates.map(b=>{
       const slug=b.pages[0].titles?.canonical||b.pages[0].title||'';
       return slug?fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(slug)}`).then(r=>r.json()).catch(()=>null):Promise.resolve(null);
@@ -1455,7 +1486,10 @@ async function fetchBirthdayCelebs(birth){
     const scored=candidates.map((b,i)=>{
       const full=summaries[i].status==='fulfilled'?summaries[i].value:null;
       if(full?.thumbnail&&!b.pages[0].thumbnail)b.pages[0].thumbnail=full.thumbnail;
-      return{b,score:notabilityScore(b.pages[0],full)};
+      const page = b.pages[0];
+      // Attach birth year to page object for scoring
+      page.born = b.year;
+      return{b,score:notabilityScore(page,full)};
     });
     return scored.sort((a,b)=>b.score-a.score).slice(0,16).map(s=>s.b);
   }catch(e){return[];}
