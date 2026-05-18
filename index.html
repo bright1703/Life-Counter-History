@@ -79,6 +79,16 @@
 <link rel="icon" type="image/png" sizes="32x32" href="https://bornhistory.com/favicon-32.png"/>
 <link rel="apple-touch-icon" sizes="192x192" href="https://bornhistory.com/favicon-192.png"/>
 
+<!-- ═══ Preconnect: external resources ═══ -->
+<link rel="preconnect" href="https://www.googletagmanager.com"/>
+<link rel="preconnect" href="https://www.google-analytics.com"/>
+<link rel="preconnect" href="https://fundingchoicesmessages.google.com"/>
+<link rel="preconnect" href="https://pagead2.googlesyndication.com"/>
+<link rel="dns-prefetch" href="https://www.googletagmanager.com"/>
+<link rel="dns-prefetch" href="https://www.google-analytics.com"/>
+<link rel="dns-prefetch" href="https://fundingchoicesmessages.google.com"/>
+<link rel="dns-prefetch" href="https://pagead2.googlesyndication.com"/>
+
 <!-- ═══ Google Analytics GA4 ═══ -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-363E7HHLXZ"></script>
 <script>
@@ -90,9 +100,6 @@
 
 <!-- ═══ Yandex Webmaster ═══ -->
 <meta name="yandex-verification" content="f97e1d15138b4f6e"/>
-
-<!-- ═══ Google AdSense ═══ -->
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8902130785981866" crossorigin="anonymous"></script>
 
 <link rel="stylesheet" href="/styles.css"/>
 </head>
@@ -210,8 +217,18 @@ try{
 </div>
 
 <!-- Load data file first so MUSIC_DB / FILM_DB are ready for the main script -->
-<script src="data.js"></script>
+<script src="data.js" defer></script>
+<script src="/app.js" defer></script>
 
-<script src="/app.js"></script>
+<!-- ═══ Google AdSense: lazy load after page is ready ═══ -->
+<script>
+window.addEventListener('load', function() {
+  var s = document.createElement('script');
+  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8902130785981866';
+  s.async = true;
+  s.crossOrigin = 'anonymous';
+  document.head.appendChild(s);
+});
+</script>
 </body>
 </html>
